@@ -1,0 +1,48 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - master
+      - release
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    env:
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      KEY_BASE_64_RELEASE: ${{ secrets.KEY_BASE_64_RELEASE }}
+
+    steps:
+      - name: Set Time Zone
+        run: sudo ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+
+      - uses: actions/checkout@v3
+
+      - name: Store Gradle Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Create Release KeyStore File
+        run: echo "$KEY_BASE_64_RELEASE" | base64 -d > release.keystore
+
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: APK
+          path: app/build/outputs/apk/release

@@ -74,4 +74,17 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation "com.squareup.okhttp3:okhttp:4.9.3"
+
+    // Coil
+    implementation 'io.coil-kt:coil-compose:2.3.0'
+
+    // Jsoup
+    implementation 'org.jsoup:jsoup:1.15.1'
+
+    // ThreeTenABP
+    implementation 'com.jakewharton.threetenabp:threetenabp:1.4.6'
+
+    // Sheets-Compose-Dialogs
+    implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.1.1'
+    implementation 'com.maxkeppeler.sheets-compose-dialogs:calendar:1.1.1'
 }

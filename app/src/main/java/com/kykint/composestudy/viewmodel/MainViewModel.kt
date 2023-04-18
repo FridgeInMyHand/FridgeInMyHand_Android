@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.kykint.composestudy.model.MyModel
+import com.kykint.composestudy.data.MyModel
 import com.kykint.composestudy.utils.Event
 
 /**

@@ -1,6 +1,8 @@
 package com.kykint.composestudy.compose
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,28 +10,43 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.kykint.composestudy.model.Food
+import com.kykint.composestudy.data.Food
 import com.kykint.composestudy.ui.theme.ComposeStudyTheme
+import com.kykint.composestudy.utils.epochSecondsToSimpleDate
 import com.kykint.composestudy.viewmodel.DummyAddFoodViewModel
 import com.kykint.composestudy.viewmodel.IAddFoodViewModel
+import com.maxkeppeker.sheets.core.models.base.rememberUseCaseState
+import com.maxkeppeler.sheets.calendar.CalendarDialog
+import com.maxkeppeler.sheets.calendar.models.CalendarConfig
+import com.maxkeppeler.sheets.calendar.models.CalendarSelection
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFoodScreen(
     viewModel: IAddFoodViewModel,
     onFabClick: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
+    onAddDoneClicked: () -> Unit = {},
 ) {
     ComposeStudyTheme {
         Scaffold(
@@ -51,18 +68,21 @@ fun AddFoodScreen(
                     items = viewModel.items,
                     onAddFoodItemClicked = viewModel::onAddFoodItemClicked,
                     onSendPhotoTestClicked = onSendPhotoTestClicked,
+                    onAddDoneClicked = onAddDoneClicked,
                 )
             }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AddFoodScreenPreview() {
     AddFoodScreen(viewModel = DummyAddFoodViewModel())
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun EditableFoodItemListPreview() {
@@ -70,11 +90,13 @@ fun EditableFoodItemListPreview() {
     EditableFoodItemList(items = items)
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditableFoodItemList(
     items: List<Food>,
     onItemClick: (Int) -> Unit = {},
     onAddFoodItemClicked: () -> Unit = {},
+    onAddDoneClicked: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
 ) {
     LazyColumn(
@@ -100,25 +122,27 @@ fun EditableFoodItemList(
                 Icon(Icons.Filled.Add, "")
             }
         }
-        // TODO: For testing only. Should not be here!!
         item {
             ElevatedButton(
-                onClick = onSendPhotoTestClicked,
+                onClick = onAddDoneClicked,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("사진 전송")
+                Text("추가 완료")
             }
         }
     }
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
 fun EditableFoodItemPreview() {
     EditableFoodItem(item = Food(name = "김치", bestBefore = System.currentTimeMillis()))
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditableFoodItem(
     item: Food,
@@ -139,45 +163,91 @@ fun EditableFoodItem(
             .wrapContentHeight()
             .padding(8.dp)
     ) {
+        val coroutineScope = rememberCoroutineScope()
+
+        var selectedDate by remember {
+            mutableStateOf<LocalDate?>(null)
+        }
+        val calenderState = rememberUseCaseState()
+
+        var foodName by remember { mutableStateOf(TextFieldValue(item.name)) }
+        var foodBestBefore by remember {
+            mutableStateOf(item.bestBefore?.let {
+                epochSecondsToSimpleDate(it)
+            } ?: "")
+        }
+
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+        CalendarDialog(
+            state = calenderState,
+            config = CalendarConfig(
+                monthSelection = true,
+                yearSelection = true,
+            ),
+            selection = CalendarSelection.Date {
+                selectedDate = it
+                foodBestBefore = it.format(formatter)
+                onBestBeforeChanged(it.atStartOfDay(ZoneId.systemDefault()).toEpochSecond())
+            },
+        )
+
         Column {
-            val foodName = remember { mutableStateOf(TextFieldValue(item.name)) }
-            val foodBestBefore =
-                remember { mutableStateOf(TextFieldValue(item.bestBefore?.toString() ?: "")) }
-            OutlinedTextField(
-                value = foodName.value,
+            CustomTextField(
+                value = foodName,
                 onValueChange = {
-                    foodName.value = it
+                    foodName = it
                     onNameChanged(it.text)
                 },
                 placeholder = {
                     Text(
                         "이름",
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelSmall
                     )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(start = 8.dp, end = 8.dp, top = 8.dp),
+                textStyle = MaterialTheme.typography.bodySmall,
             )
-            OutlinedTextField(
-                value = foodBestBefore.value,
-                onValueChange = {
-                    foodBestBefore.value = it
-                    try {
-                        onBestBeforeChanged(it.text.toLong())
-                    } catch (_: NumberFormatException) {
-                    }
-                },
-                placeholder = {
-                    Text(
-                        "유통기한",
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CustomTextField(
+                    value = foodBestBefore,
+                    /*
+                    onValueChange = {
+                        foodBestBefore = it
+                        try {
+                            onBestBeforeChanged(it.text.toLong())
+                        } catch (_: NumberFormatException) {
+                        }
+                    },
+                    */
+                    placeholder = {
+                        Text(
+                            "유통기한",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp),
+                    enabled = false,
+                )
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            calenderState.show()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = 8.dp),
+                ) {
+                    Icon(Icons.Filled.EditCalendar, "")
+                }
+            }
         }
     }
 }

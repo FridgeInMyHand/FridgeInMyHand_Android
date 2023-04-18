@@ -2,7 +2,7 @@ package com.kykint.composestudy.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
-import com.kykint.composestudy.model.Food
+import com.kykint.composestudy.data.Food
 
 abstract class IAddFoodViewModel : ViewModel() {
     abstract val items: List<Food>

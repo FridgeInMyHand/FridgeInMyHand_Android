@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -36,14 +37,8 @@ fun CustomTextField(
     shape: Shape = OutlinedTextFieldDefaults.shape,
     isError: Boolean = false,
     contentPadding: PaddingValues = TextFieldDefaults.contentPaddingWithLabel(),
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 ) {
-    val containerColor = FilledTextFieldTokens.ContainerColor.toColor()
-    val colors = TextFieldDefaults.colors(
-        focusedContainerColor = containerColor,
-        unfocusedContainerColor = containerColor,
-        disabledContainerColor = containerColor,
-    )
-
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -98,14 +93,8 @@ fun CustomTextField(
     shape: Shape = OutlinedTextFieldDefaults.shape,
     isError: Boolean = false,
     contentPadding: PaddingValues = TextFieldDefaults.contentPaddingWithLabel(),
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 ) {
-    val containerColor = FilledTextFieldTokens.ContainerColor.toColor()
-    val colors = TextFieldDefaults.colors(
-        focusedContainerColor = containerColor,
-        unfocusedContainerColor = containerColor,
-        disabledContainerColor = containerColor,
-    )
-
     BasicTextField(
         value = value,
         onValueChange = onValueChange,

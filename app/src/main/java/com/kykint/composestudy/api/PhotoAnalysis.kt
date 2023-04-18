@@ -1,10 +1,12 @@
 package com.kykint.composestudy.api
 
-import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.WorkerThread
+import com.kykint.composestudy.App
 import com.kykint.composestudy.data.photoanalysis.Response
-import com.kykint.composestudy.utils.encode
+import com.kykint.composestudy.utils.saveAsFile
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -32,29 +34,44 @@ object PhotoAnalysisClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val service = retrofit.create(PhotoAnalysisService::class.java)
+    val service: PhotoAnalysisService = retrofit.create(PhotoAnalysisService::class.java)
 }
 
-class PhotoAnalysisRepository {
-    fun getObjectInfos(
-        context: Context,
+object PhotoAnalysis {
+    @WorkerThread
+    suspend fun getObjectInfos(
+        bitmap: Bitmap,
+        onSuccess: (Response?) -> Unit = {},
+        onFailure: () -> Unit = {},
+    ) {
+        val tempImage = App.context.filesDir.path + File.separator + "temp.png"
+        val file = bitmap.saveAsFile(tempImage)
+        file?.let {
+            getObjectInfos(tempImage, onSuccess, onFailure)
+        } ?: onFailure()
+    }
+
+    @WorkerThread
+    suspend fun getObjectInfos(
+        filePath: String,
         onSuccess: (Response?) -> Unit = {}, // TODO: Data shouldn't be null
         onFailure: () -> Unit = {},
     ) {
         val call = PhotoAnalysisClient.service.getObjectInfos(
             getImageBody(
-                name="image",
-                file=File(context.filesDir.path+"/logo_small.jpg"),
+                name = "image",
+                file = File(filePath),
             )
         )
 
+        Log.d("SERVER", "calling photo analysis server")
         call.enqueue(object : Callback<Response> {
             override fun onResponse(call: Call<Response>, response: retrofit2.Response<Response>) {
                 if (response.isSuccessful && response.body() != null) {
                     onSuccess(response.body()!!)
                 } else {
                     Toast.makeText(
-                        context, "Response was successful, but something went wrong",
+                        App.context, "Response was successful, but something went wrong",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -62,19 +79,20 @@ class PhotoAnalysisRepository {
 
             override fun onFailure(call: Call<Response>, t: Throwable) {
                 Toast.makeText(
-                    context, "Couldn't even establish connection!",
+                    App.context, "Couldn't even establish connection!",
                     Toast.LENGTH_SHORT
                 ).show()
-                Log.e("PhotoAnalysis", t.message?:"")
+                Log.e("PhotoAnalysis", t.message ?: "")
+                onFailure()
             }
         })
     }
-}
 
-fun getImageBody(name: String, file: File): MultipartBody.Part {
-    return MultipartBody.Part.createFormData(
-        name = name,
-        filename = file.name,
-        body = file.asRequestBody("image/*".toMediaType())
-    )
+    private fun getImageBody(name: String, file: File): MultipartBody.Part {
+        return MultipartBody.Part.createFormData(
+            name = name,
+            filename = file.name,
+            body = file.asRequestBody("image/*".toMediaType())
+        )
+    }
 }

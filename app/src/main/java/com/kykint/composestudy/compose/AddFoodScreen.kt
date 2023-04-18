@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,10 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jakewharton.threetenabp.AndroidThreeTen
 import com.kykint.composestudy.data.Food
+import com.kykint.composestudy.ui.ComposableToast
 import com.kykint.composestudy.ui.theme.ComposeStudyTheme
 import com.kykint.composestudy.utils.epochSecondsToSimpleDate
 import com.kykint.composestudy.viewmodel.DummyAddFoodViewModel
@@ -65,7 +69,8 @@ fun AddFoodScreen(
                 modifier = Modifier.padding(contentPadding),
             ) {
                 EditableFoodItemList(
-                    items = viewModel.items,
+                    items = viewModel.items, // TODO: should be replaced with an empty list
+                    viewModel = viewModel,
                     onAddFoodItemClicked = viewModel::onAddFoodItemClicked,
                     onSendPhotoTestClicked = onSendPhotoTestClicked,
                     onAddDoneClicked = onAddDoneClicked,
@@ -87,18 +92,22 @@ fun AddFoodScreenPreview() {
 @Composable
 fun EditableFoodItemListPreview() {
     val items = (1..3).map { i -> Food(name = "$i") }
-    EditableFoodItemList(items = items)
+    EditableFoodItemList(items = items, viewModel = DummyAddFoodViewModel())
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditableFoodItemList(
     items: List<Food>,
+    viewModel: IAddFoodViewModel,
     onItemClick: (Int) -> Unit = {},
     onAddFoodItemClicked: () -> Unit = {},
     onAddDoneClicked: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
 ) {
+    viewModel.detectedFoodNames.observeAsState().value?.let {
+        ComposableToast(message = "New items detected")
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -138,7 +147,13 @@ fun EditableFoodItemList(
 @Preview
 @Composable
 fun EditableFoodItemPreview() {
-    EditableFoodItem(item = Food(name = "김치", bestBefore = System.currentTimeMillis()))
+    AndroidThreeTen.init(LocalContext.current)
+    EditableFoodItem(
+        item = Food(
+            name = "김치",
+            bestBefore = (System.currentTimeMillis() / 1000).toLong()
+        )
+    )
 }
 
 @RequiresApi(Build.VERSION_CODES.O)

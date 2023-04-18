@@ -77,14 +77,6 @@ fun FridgeMainScreen(
                             onItemClick = viewModel::onItemClick,
                         )
                     }
-                    ElevatedButton(
-                        onClick = onBtnClick,
-                        modifier = Modifier.align(
-                            Alignment.CenterHorizontally
-                        ),
-                    ) {
-                        Text("This is a button")
-                    }
 
                     clicked?.let {
                         it.getContentIfNotHandled()?.let {

@@ -34,6 +34,7 @@ class FridgeMainViewModel(
 
     // https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories#kotlin_1
     companion object {
+        // TODO: Replace FakeFactory with real one
         val FakeFactory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

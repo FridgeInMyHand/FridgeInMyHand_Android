@@ -5,10 +5,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.WorkerThread
 import com.kykint.composestudy.App
-import com.kykint.composestudy.data.photoanalysis.Response
+import com.kykint.composestudy.BuildConfig
 import com.kykint.composestudy.utils.saveAsFile
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -24,7 +25,7 @@ interface PhotoAnalysisService {
     @POST("getData")
     fun getObjectInfos(
         @Part file: MultipartBody.Part
-    ): Call<Response>
+    ): Call<PhotoAnalysisResponse>
 }
 
 object PhotoAnalysisClient {
@@ -32,16 +33,28 @@ object PhotoAnalysisClient {
     private val retrofit = Retrofit.Builder()
         .baseUrl(baseurl)
         .addConverterFactory(GsonConverterFactory.create())
+        .apply {
+            if (BuildConfig.DEBUG) {
+                client(
+                    OkHttpClient()
+                        .newBuilder()
+                        .addInterceptor(
+                            MockResponse(MockResponse.RESPONSE_PHOTO_ANALYSIS, 200)
+                        )
+                        .build()
+                )
+            }
+        }
         .build()
 
     val service: PhotoAnalysisService = retrofit.create(PhotoAnalysisService::class.java)
 }
 
-object PhotoAnalysis {
+object PhotoAnalysisApi {
     @WorkerThread
     suspend fun getObjectInfos(
         bitmap: Bitmap,
-        onSuccess: (Response?) -> Unit = {},
+        onSuccess: (PhotoAnalysisResponse?) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
         val tempImage = App.context.filesDir.path + File.separator + "temp.png"
@@ -54,7 +67,7 @@ object PhotoAnalysis {
     @WorkerThread
     suspend fun getObjectInfos(
         filePath: String,
-        onSuccess: (Response?) -> Unit = {}, // TODO: Data shouldn't be null
+        onSuccess: (PhotoAnalysisResponse?) -> Unit = {}, // TODO: Data shouldn't be null
         onFailure: () -> Unit = {},
     ) {
         val call = PhotoAnalysisClient.service.getObjectInfos(
@@ -65,8 +78,11 @@ object PhotoAnalysis {
         )
 
         Log.d("SERVER", "calling photo analysis server")
-        call.enqueue(object : Callback<Response> {
-            override fun onResponse(call: Call<Response>, response: retrofit2.Response<Response>) {
+        call.enqueue(object : Callback<PhotoAnalysisResponse> {
+            override fun onResponse(
+                call: Call<PhotoAnalysisResponse>,
+                response: retrofit2.Response<PhotoAnalysisResponse>
+            ) {
                 if (response.isSuccessful && response.body() != null) {
                     onSuccess(response.body()!!)
                 } else {
@@ -77,7 +93,7 @@ object PhotoAnalysis {
                 }
             }
 
-            override fun onFailure(call: Call<Response>, t: Throwable) {
+            override fun onFailure(call: Call<PhotoAnalysisResponse>, t: Throwable) {
                 Toast.makeText(
                     App.context, "Couldn't even establish connection!",
                     Toast.LENGTH_SHORT

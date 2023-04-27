@@ -1,14 +1,22 @@
 package com.kykint.composestudy.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.kykint.composestudy.data.Food
-import com.kykint.composestudy.repository.DummyFridgeRepositoryImpl
+import com.kykint.composestudy.repository.FridgeRepositoryImpl
 import com.kykint.composestudy.repository.IFridgeRepository
 import com.kykint.composestudy.utils.Event
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * https://medium.com/geekculture/add-remove-in-lazycolumn-list-aka-recyclerview-jetpack-compose-7c4a2464fc9f
@@ -19,6 +27,21 @@ import com.kykint.composestudy.utils.Event
  * ViewModel for FridgeMainActivity
  */
 abstract class IFridgeMainViewModel : ViewModel() {
+    sealed class State {
+        object Normal : State()
+
+        object Success : State()
+        // data class Success(
+        //     val list: List<Food>
+        // ) : State()
+
+        object Failure : State()
+
+        object Loading : State()
+    }
+
+    abstract val state: StateFlow<State>
+
     // abstract val myModels: LiveData<List<MyModel>>
     abstract val foods: List<Food>
     abstract val onItemClickEvent: MutableLiveData<Event<Food>>
@@ -31,14 +54,15 @@ abstract class IFridgeMainViewModel : ViewModel() {
 class FridgeMainViewModel(
     private val repository: IFridgeRepository,
 ) : IFridgeMainViewModel() {
+    private val _state: MutableStateFlow<State> = MutableStateFlow(State.Normal)
+    override val state: StateFlow<State> = _state.asStateFlow()
 
     // https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories#kotlin_1
     companion object {
-        // TODO: Replace FakeFactory with real one
-        val FakeFactory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val repo = DummyFridgeRepositoryImpl()
+                val repo = FridgeRepositoryImpl()
                 return FridgeMainViewModel(repo) as T
             }
         }
@@ -55,9 +79,19 @@ class FridgeMainViewModel(
     override val onItemClickEvent: MutableLiveData<Event<Food>> = MutableLiveData()
 
     override fun loadFoods() {
-        repository.getFoods().let {
-            // _myModels.postValue(it) // TODO: postValue 를 쓴 이유?
-            foods.addAll(it)
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.value = State.Loading
+            delay(1000) // TODO: REMOVE
+            repository.getFoods(
+                onSuccess = {
+                    foods = it.toMutableStateList()
+                    _state.value = State.Success
+                },
+                onFailure = {
+                    _state.value = State.Failure
+                },
+            )
+            // TODO: Handle failure
         }
     }
 
@@ -78,6 +112,7 @@ class FridgeMainViewModel(
  * Used for preview
  */
 class DummyFridgeMainViewModel : IFridgeMainViewModel() {
+    override val state: StateFlow<State> = MutableStateFlow(State.Normal).asStateFlow()
     override val foods: List<Food>
         get() = listOf(
             Food(name = "김치", bestBefore = 1681761600),

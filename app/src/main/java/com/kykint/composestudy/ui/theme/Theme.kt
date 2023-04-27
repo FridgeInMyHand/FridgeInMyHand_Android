@@ -2,7 +2,6 @@ package com.kykint.composestudy.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -10,12 +9,15 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.ViewCompat
-import com.kykint.composestudy.R
+import com.jakewharton.threetenabp.AndroidThreeTen
+import com.kykint.composestudy.compose.FridgeMainScreen
+import com.kykint.composestudy.viewmodel.DummyFridgeMainViewModel
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -26,11 +28,11 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
-    tertiary = Pink40
+    tertiary = Pink40,
+    background = Color.White,
+    surface = Color.White,
 
     /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
@@ -41,9 +43,9 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ComposeStudyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -51,6 +53,7 @@ fun ComposeStudyTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
@@ -67,4 +70,22 @@ fun ComposeStudyTheme(
         typography = Typography,
         content = content
     )
+}
+
+@Preview
+@Composable
+fun ThemePreview() {
+    AndroidThreeTen.init(LocalContext.current)
+    ComposeStudyTheme {
+        FridgeMainScreen(viewModel = DummyFridgeMainViewModel())
+    }
+}
+
+@Preview
+@Composable
+fun ThemePreviewDark() {
+    AndroidThreeTen.init(LocalContext.current)
+    ComposeStudyTheme(darkTheme = true) {
+        FridgeMainScreen(viewModel = DummyFridgeMainViewModel())
+    }
 }

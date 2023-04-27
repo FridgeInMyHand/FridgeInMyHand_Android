@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,6 +17,7 @@ import androidx.core.content.FileProvider
 import com.kykint.composestudy.App
 import com.kykint.composestudy.BuildConfig
 import com.kykint.composestudy.compose.AddFoodScreen
+import com.kykint.composestudy.ui.theme.ComposeStudyTheme
 import com.kykint.composestudy.viewmodel.AddFoodViewModel
 import java.io.File
 
@@ -30,52 +30,55 @@ class AddFoodActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AddFoodScreen(
-                viewModel = viewModel,
-                /*
-                onSendPhotoTestClicked = {
-                    viewModel.viewModelScope.launch {
-                        repo.getObjectInfos(
-                            this@AddFoodActivity,
-                            onSuccess = {
-                                if (it != null) {
-                                    Toast.makeText(
-                                        this@AddFoodActivity,
-                                        it.names.encode(),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Log.e("AddFoodActivity", "Great, we got null")
-                                }
-                            },
-                        )
+            ComposeStudyTheme {
+                AddFoodScreen(
+                    viewModel = viewModel,
+                    /*
+                        onSendPhotoTestClicked = {
+                            viewModel.viewModelScope.launch {
+                                repo.getObjectInfos(
+                                    this@AddFoodActivity,
+                                    onSuccess = {
+                                        if (it != null) {
+                                            Toast.makeText(
+                                                this@AddFoodActivity,
+                                                it.names.encode(),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } else {
+                                            Log.e("AddFoodActivity", "Great, we got null")
+                                        }
+                                    },
+                                )
+                            }
+                        },
+                    */
+                    onAddDoneClicked = {
+                        // TODO: Trigger refresh when adding is done
+                        setResult(RESULT_OK)
+                        finish()
+                    },
+                    onFabClick = {
+                        // Check camera permission
+                        if (checkSelfPermission(Manifest.permission.CAMERA) ==
+                            PackageManager.PERMISSION_GRANTED &&
+                            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                            PackageManager.PERMISSION_GRANTED
+                        ) {
+                            launchCamera()
+                        } else {
+                            ActivityCompat.requestPermissions(
+                                this,
+                                arrayOf(
+                                    Manifest.permission.CAMERA,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                ),
+                                PERM_REQ_CODE
+                            )
+                        }
                     }
-                },
-                */
-                onAddDoneClicked = {
-                    // TODO: Trigger refresh when adding is done
-                    finish()
-                },
-                onFabClick = {
-                    // Check camera permission
-                    if (checkSelfPermission(Manifest.permission.CAMERA) ==
-                        PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                        PackageManager.PERMISSION_GRANTED
-                    ) {
-                        launchCamera()
-                    } else {
-                        ActivityCompat.requestPermissions(
-                            this,
-                            arrayOf(
-                                Manifest.permission.CAMERA,
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE
-                            ),
-                            PERM_REQ_CODE
-                        )
-                    }
-                }
-            )
+                )
+            }
         }
     }
 
@@ -96,11 +99,9 @@ class AddFoodActivity : ComponentActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == REQUEST_CAMERA) {
-            if (resultCode == RESULT_OK && intent.hasExtra("data")) {
-                val bitmap = intent.extras!!.get("data") as Bitmap
-                viewModel.onPictureTaken(bitmap)
+            if (resultCode == RESULT_OK) {
+                viewModel.onPictureTaken(tempPicPath)
             }
-            viewModel.test()
         }
     }
 

@@ -3,33 +3,30 @@ package com.kykint.composestudy.compose
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.kykint.composestudy.data.Food
-import com.kykint.composestudy.ui.ComposableToast
 import com.kykint.composestudy.ui.theme.ComposeStudyTheme
 import com.kykint.composestudy.utils.epochSecondsToSimpleDate
 import com.kykint.composestudy.viewmodel.DummyAddFoodViewModel
@@ -52,30 +49,34 @@ fun AddFoodScreen(
     onSendPhotoTestClicked: () -> Unit = {},
     onAddDoneClicked: () -> Unit = {},
 ) {
-    ComposeStudyTheme {
-        Scaffold(
-            topBar = {
-                TopAppBar(title = { Text("Add Food") })
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onFabClick,
-                ) {
-                    Icon(Icons.Filled.PhotoCamera, "Take a picture")
-                }
-            },
-        ) { contentPadding ->
-            Box(
-                modifier = Modifier.padding(contentPadding),
+    val state by viewModel.state.collectAsState()
+
+    if (state is IAddFoodViewModel.State.Loading) {
+        ServerWaitingDialog()
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Add Food") })
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onFabClick,
             ) {
-                EditableFoodItemList(
-                    items = viewModel.items, // TODO: should be replaced with an empty list
-                    viewModel = viewModel,
-                    onAddFoodItemClicked = viewModel::onAddFoodItemClicked,
-                    onSendPhotoTestClicked = onSendPhotoTestClicked,
-                    onAddDoneClicked = onAddDoneClicked,
-                )
+                Icon(Icons.Filled.PhotoCamera, "Take a picture")
             }
+        },
+    ) { contentPadding ->
+        Box(
+            modifier = Modifier.padding(contentPadding),
+        ) {
+            EditableFoodItemList(
+                items = viewModel.items, // TODO: should be replaced with an empty list
+                viewModel = viewModel,
+                onAddFoodItemClicked = viewModel::onAddFoodItemClicked,
+                onSendPhotoTestClicked = onSendPhotoTestClicked,
+                onAddDoneClicked = onAddDoneClicked,
+            )
         }
     }
 }
@@ -83,21 +84,23 @@ fun AddFoodScreen(
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun AddFoodScreenPreview() {
-    AddFoodScreen(viewModel = DummyAddFoodViewModel())
+private fun AddFoodScreenPreview() {
+    ComposeStudyTheme {
+        AddFoodScreen(viewModel = DummyAddFoodViewModel())
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun EditableFoodItemListPreview() {
+private fun EditableFoodItemListPreview() {
     val items = (1..3).map { i -> Food(name = "$i") }
     EditableFoodItemList(items = items, viewModel = DummyAddFoodViewModel())
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun EditableFoodItemList(
+private fun EditableFoodItemList(
     items: List<Food>,
     viewModel: IAddFoodViewModel,
     onItemClick: (Int) -> Unit = {},
@@ -105,13 +108,13 @@ fun EditableFoodItemList(
     onAddDoneClicked: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
 ) {
-    viewModel.detectedFoodNames.observeAsState().value?.let {
-        ComposableToast(message = "New items detected")
-    }
+    // viewModel.detectedFoodNames.observeAsState().value?.let {
+    //     ComposableToast(message = "New items detected")
+    // }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         // TODO: key 추가 후 성능 향상 테스트
         itemsIndexed(items) { index, item ->
@@ -146,7 +149,7 @@ fun EditableFoodItemList(
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
-fun EditableFoodItemPreview() {
+private fun EditableFoodItemPreview() {
     AndroidThreeTen.init(LocalContext.current)
     EditableFoodItem(
         item = Food(
@@ -159,24 +162,17 @@ fun EditableFoodItemPreview() {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditableFoodItem(
+private fun EditableFoodItem(
     item: Food,
     onNameChanged: (String) -> Unit = {},
     onBestBeforeChanged: (Long) -> Unit = {}
 ) {
-    Card(
-        shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-            contentColor = MaterialTheme.colorScheme.primary,
-        ),
+    MyElevatedCard(
         modifier = Modifier
             // .clickable(onClick = onClick)
             // .fillMaxWidth()
             .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(8.dp)
+            .wrapContentHeight(),
     ) {
         val coroutineScope = rememberCoroutineScope()
 
@@ -207,7 +203,9 @@ fun EditableFoodItem(
             },
         )
 
-        Column {
+        Column(
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        ) {
             CustomTextField(
                 value = foodName,
                 onValueChange = {
@@ -266,10 +264,26 @@ fun EditableFoodItem(
         }
     }
 }
+
+@Composable
+private fun ServerWaitingDialog() {
+    ProgressDialog {
+        Text("Waiting for analysis result...")
+    }
+}
+
+@Preview
+@Composable
+private fun ServerWaitingDialogPreview() {
+    ComposeStudyTheme {
+        ServerWaitingDialog()
+    }
+}
+
 /*
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun FoodListItemPreview() {
+private fun FoodListItemPreview() {
     val model = Food(name = "Title string")
     FoodListItem(model = model)
 }

@@ -35,10 +35,12 @@ abstract class IAddFoodViewModel : ViewModel() {
     // abstract val detectedFoodNames: LiveData<List<String>>
     abstract val items: SnapshotStateList<Food>
 
-    abstract fun onAddFoodItemClicked(): Unit
-    abstract fun onPictureTaken(path: String): Unit
-
+    abstract fun onAddFoodItemClicked()
+    abstract fun onPictureTaken(path: String)
+    abstract fun addItem()
     abstract fun removeItem(index: Int)
+    abstract fun changeItemName(index: Int, newName: String)
+    abstract fun changeItemBestBefore(index: Int, newBestBefore: Long)
 }
 
 class AddFoodViewModel(
@@ -91,8 +93,22 @@ class AddFoodViewModel(
         //     }
     }
 
+    override fun addItem() {
+        items.add(Food(name = ""))
+    }
+
     override fun removeItem(index: Int) {
         items.removeAt(index)
+    }
+
+    override fun changeItemName(index: Int, newName: String) {
+        // items[index] = items[index].copy(name = newName)
+        items[index].name = newName
+    }
+
+    override fun changeItemBestBefore(index: Int, newBestBefore: Long) {
+        // items[index] = items[index].copy(bestBefore = newBestBefore)
+        items[index].bestBefore = newBestBefore
     }
 
     // https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories#kotlin_1
@@ -121,5 +137,8 @@ class DummyAddFoodViewModel : IAddFoodViewModel() {
 
     override fun onAddFoodItemClicked() {}
     override fun onPictureTaken(path: String) {}
+    override fun addItem() {}
     override fun removeItem(index: Int) {}
+    override fun changeItemName(index: Int, newName: String) {}
+    override fun changeItemBestBefore(index: Int, newBestBefore: Long) {}
 }

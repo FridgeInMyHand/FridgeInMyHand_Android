@@ -1,7 +1,6 @@
 package com.kykint.composestudy.compose
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,7 +24,6 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jakewharton.threetenabp.AndroidThreeTen
@@ -50,6 +48,9 @@ fun AddFoodScreen(
     viewModel: IAddFoodViewModel,
     onFabClick: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
+    onAddFoodItemClicked: () -> Unit = {},
+    onNameChanged: (Int, String) -> Unit = { _, _ -> },
+    onBestBeforeChanged: (Int, Long) -> Unit = { _, _ -> },
     onAddDoneClicked: () -> Unit = {},
     onItemRemoveClicked: (Int) -> Unit = {},
 ) {
@@ -77,7 +78,9 @@ fun AddFoodScreen(
             EditableFoodItemList(
                 items = viewModel.items, // TODO: should be replaced with an empty list
                 viewModel = viewModel,
-                onAddFoodItemClicked = viewModel::onAddFoodItemClicked,
+                onAddFoodItemClicked = onAddFoodItemClicked,
+                onNameChanged = onNameChanged,
+                onBestBeforeChanged = onBestBeforeChanged,
                 onSendPhotoTestClicked = onSendPhotoTestClicked,
                 onAddDoneClicked = onAddDoneClicked,
                 onItemRemoveClicked = onItemRemoveClicked,
@@ -109,6 +112,8 @@ private fun EditableFoodItemList(
     items: SnapshotStateList<Food>,
     viewModel: IAddFoodViewModel,
     onItemClick: (Int) -> Unit = {},
+    onNameChanged: (Int, String) -> Unit = { _, _ -> },
+    onBestBeforeChanged: (Int, Long) -> Unit = { _, _ -> },
     onAddFoodItemClicked: () -> Unit = {},
     onAddDoneClicked: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
@@ -124,11 +129,14 @@ private fun EditableFoodItemList(
     ) {
         // TODO: key 추가 후 성능 향상 테스트
 
-        itemsIndexed(items = items, key = { index: Int, item: Food -> index }) { index, item ->
+        itemsIndexed(items = items) { index, item ->
             EditableFoodItem(
                 item = item,
                 onNameChanged = {
-                    Log.e("AddFoodScreen", "========== $it =========")
+                    onNameChanged(index, it)
+                },
+                onBestBeforeChanged = {
+                    onBestBeforeChanged(index, it)
                 },
                 onItemRemoveClicked = {
                     onItemRemoveClicked(index)
@@ -192,11 +200,12 @@ private fun EditableFoodItem(
         }
         val calenderState = rememberUseCaseState()
 
-        var foodName by remember { mutableStateOf(TextFieldValue(item.name)) }
-        var foodBestBefore by remember {
-            mutableStateOf(item.bestBefore?.let {
-                epochSecondsToSimpleDate(it)
-            } ?: "")
+        // rememberUpdatedState를 대신 쓸 수도 있지만 var로 선언할 수 없음
+        var foodName by remember { mutableStateOf(item.name) }.apply {
+            value = item.name
+        }
+        var foodBestBefore by remember { mutableStateOf(item.bestBefore) }.apply {
+            value = item.bestBefore
         }
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -208,9 +217,10 @@ private fun EditableFoodItem(
                 yearSelection = true,
             ),
             selection = CalendarSelection.Date {
+                val epoch = it.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
                 selectedDate = it
-                foodBestBefore = it.format(formatter)
-                onBestBeforeChanged(it.atStartOfDay(ZoneId.systemDefault()).toEpochSecond())
+                foodBestBefore = epoch
+                onBestBeforeChanged(epoch)
             },
         )
 
@@ -221,7 +231,7 @@ private fun EditableFoodItem(
                 value = foodName,
                 onValueChange = {
                     foodName = it
-                    onNameChanged(it.text)
+                    onNameChanged(it)
                 },
                 placeholder = {
                     Text(
@@ -238,16 +248,9 @@ private fun EditableFoodItem(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CustomTextField(
-                    value = foodBestBefore,
-                    /*
-                    onValueChange = {
-                        foodBestBefore = it
-                        try {
-                            onBestBeforeChanged(it.text.toLong())
-                        } catch (_: NumberFormatException) {
-                        }
-                    },
-                    */
+                    value = foodBestBefore?.let {
+                        epochSecondsToSimpleDate(it).format(formatter)
+                    } ?: "",
                     placeholder = {
                         Text(
                             "유통기한",
@@ -258,6 +261,7 @@ private fun EditableFoodItem(
                         .weight(1f)
                         .padding(8.dp),
                     enabled = false,
+                    textStyle = MaterialTheme.typography.bodySmall,
                 )
                 FilledTonalIconButton(
                     onClick = {

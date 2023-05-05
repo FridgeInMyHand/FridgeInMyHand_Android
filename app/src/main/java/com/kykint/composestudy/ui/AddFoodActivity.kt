@@ -77,6 +77,9 @@ class AddFoodActivity : ComponentActivity() {
                             )
                         }
                     },
+                    onAddFoodItemClicked = viewModel::addItem,
+                    onNameChanged = viewModel::changeItemName,
+                    onBestBeforeChanged = viewModel::changeItemBestBefore,
                     onItemRemoveClicked = viewModel::removeItem,
                 )
             }

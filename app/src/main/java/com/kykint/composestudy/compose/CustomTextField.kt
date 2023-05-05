@@ -44,6 +44,7 @@ fun CustomTextField(
         onValueChange = onValueChange,
         textStyle = textStyle,
         modifier = modifier,
+        enabled = enabled,
         /*
         modifier = Modifier
             .fillMaxWidth()
@@ -100,6 +101,7 @@ fun CustomTextField(
         onValueChange = onValueChange,
         textStyle = textStyle,
         modifier = modifier,
+        enabled = enabled,
         /*
         modifier = Modifier
             .fillMaxWidth()

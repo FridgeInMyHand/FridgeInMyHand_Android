@@ -33,30 +33,19 @@ class AddFoodActivity : ComponentActivity() {
             ComposeStudyTheme {
                 AddFoodScreen(
                     viewModel = viewModel,
-                    /*
-                        onSendPhotoTestClicked = {
-                            viewModel.viewModelScope.launch {
-                                repo.getObjectInfos(
-                                    this@AddFoodActivity,
-                                    onSuccess = {
-                                        if (it != null) {
-                                            Toast.makeText(
-                                                this@AddFoodActivity,
-                                                it.names.encode(),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } else {
-                                            Log.e("AddFoodActivity", "Great, we got null")
-                                        }
-                                    },
-                                )
-                            }
-                        },
-                    */
                     onAddDoneClicked = {
-                        // TODO: Trigger refresh when adding is done
-                        setResult(RESULT_OK)
-                        finish()
+                        viewModel.addFoodDone(
+                            onSuccess = {
+                                setResult(RESULT_OK)
+                                finish()
+                            },
+                            onFailure = {
+                                Toast.makeText(
+                                    applicationContext,
+                                    "Failed to save foods!", Toast.LENGTH_SHORT
+                                ).show()
+                            },
+                        )
                     },
                     onFabClick = {
                         // Check camera permission
@@ -78,8 +67,10 @@ class AddFoodActivity : ComponentActivity() {
                         }
                     },
                     onAddFoodItemClicked = viewModel::addItem,
-                    onNameChanged = viewModel::changeItemName,
-                    onBestBeforeChanged = viewModel::changeItemBestBefore,
+                    onFoodNameChanged = viewModel::changeItemName,
+                    onFoodBestBeforeChanged = viewModel::changeItemBestBefore,
+                    onFoodAmountChanged = viewModel::changeItemAmount,
+                    onFoodPublicChanged = viewModel::changeItemPublic,
                     onItemRemoveClicked = viewModel::removeItem,
                 )
             }

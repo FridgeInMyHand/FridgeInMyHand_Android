@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.kykint.composestudy.data.Food
 import com.kykint.composestudy.repository.AddFoodRepositoryImpl
 import com.kykint.composestudy.repository.IAddFoodRepository
+import com.kykint.composestudy.repository.MyFoodListRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +42,12 @@ abstract class IAddFoodViewModel : ViewModel() {
     abstract fun removeItem(index: Int)
     abstract fun changeItemName(index: Int, newName: String)
     abstract fun changeItemBestBefore(index: Int, newBestBefore: Long)
+    abstract fun changeItemAmount(index: Int, newAmount: String)
+    abstract fun changeItemPublic(index: Int, newPublic: Boolean)
+    abstract fun addFoodDone(
+        onSuccess: () -> Unit = {},
+        onFailure: () -> Unit = {},
+    )
 }
 
 class AddFoodViewModel(
@@ -68,29 +75,15 @@ class AddFoodViewModel(
             _state.value = State.Loading
             repository.getFoodNamesFromImage(
                 path,
-                onSuccess = { response ->
-                    response?.let {
-                        it.names.map {
-                            Food(name = it.name, bestBefore = it.bestBefore)
-                        }.let { items.addAll(it) }
-                    }
+                onSuccess = { names ->
+                    names.map { Food(name = it) }.let { items.addAll(it) }
                     _state.value = State.Success
                 },
+                onFailure = {
+                    _state.value = State.Failure
+                }
             )
-            // TODO: Fail when no response
         }
-        //     viewModelScope.launch(Dispatchers.IO) {
-        //         repository.getFoodNamesFromImage(
-        //             bitmap,
-        //             { response: Response? ->
-        //                 response?.names?.let { names ->
-        //                     _detectedFoodNames.postValue(
-        //                         names.map { it.name }
-        //                     )
-        //                 }
-        //             }
-        //         )
-        //     }
     }
 
     override fun addItem() {
@@ -109,6 +102,34 @@ class AddFoodViewModel(
     override fun changeItemBestBefore(index: Int, newBestBefore: Long) {
         // items[index] = items[index].copy(bestBefore = newBestBefore)
         items[index].bestBefore = newBestBefore
+    }
+
+    override fun changeItemAmount(index: Int, newAmount: String) {
+        items[index].amount = newAmount
+    }
+
+    override fun changeItemPublic(index: Int, newPublic: Boolean) {
+        items[index].isPublic = newPublic
+    }
+
+    override fun addFoodDone(
+        onSuccess: () -> Unit,
+        onFailure: () -> Unit,
+    ) {
+        viewModelScope.launch {
+            _state.value = State.Loading
+            MyFoodListRepositoryImpl.addToFoodList(
+                items,
+                onSuccess = {
+                    _state.value = State.Success
+                    onSuccess()
+                },
+                onFailure = {
+                    _state.value = State.Failure
+                    onFailure()
+                }
+            )
+        }
     }
 
     // https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories#kotlin_1
@@ -141,4 +162,11 @@ class DummyAddFoodViewModel : IAddFoodViewModel() {
     override fun removeItem(index: Int) {}
     override fun changeItemName(index: Int, newName: String) {}
     override fun changeItemBestBefore(index: Int, newBestBefore: Long) {}
+    override fun changeItemAmount(index: Int, newAmount: String) {}
+    override fun changeItemPublic(index: Int, newPublic: Boolean) {}
+    override fun addFoodDone(
+        onSuccess: () -> Unit,
+        onFailure: () -> Unit,
+    ) {
+    }
 }

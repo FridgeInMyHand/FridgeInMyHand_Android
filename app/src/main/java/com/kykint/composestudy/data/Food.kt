@@ -17,6 +17,10 @@ data class Food(
      * UNIX Timestamp
      */
     var bestBefore: Long? = null,
+
+    var amount: String? = null,
+
+    var isPublic: Boolean = false,
 ) {
     @WorkerThread
     fun getImageModel(context: Context): ImageRequest? {
@@ -25,10 +29,16 @@ data class Food(
             ImageRequest.Builder(context)
                 .data(imageUrl)
                 .crossfade(true)
+                .diskCacheKey("food_$name")
+                .memoryCacheKey("food_$name")
                 .build()
         } else {
             null
         }
+    }
+
+    override fun toString(): String {
+        return "Food(name='$name', bestBefore=$bestBefore, amount=$amount, isPublic=$isPublic)"
     }
 
     /**

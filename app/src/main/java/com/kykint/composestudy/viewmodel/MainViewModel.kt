@@ -56,7 +56,6 @@ class MainViewModel(
 
     override fun loadMyModels() {
         repository.getModels().let {
-            // _myModels.postValue(it) // TODO: postValue 를 쓴 이유?
             myModels.addAll(it)
         }
     }

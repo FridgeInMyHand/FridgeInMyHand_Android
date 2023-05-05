@@ -1,6 +1,5 @@
 package com.kykint.composestudy.utils
 
-import android.content.Context
 import android.graphics.Bitmap
 import org.threeten.bp.Instant
 import org.threeten.bp.LocalDateTime
@@ -24,16 +23,6 @@ fun <T> Collection<T>.encode(): String {
         separator = " ; ",
         postfix = " ]",
     )
-}
-
-// TODO: REMOVEME
-fun Context.writeImageToSdcard() {
-    val outPath = filesDir.path + "/logo_small.jpg"
-    if (!File(outPath).isFile) {
-        assets.open("logo_small.jpg").use {
-            it.copyTo(FileOutputStream(outPath))
-        }
-    }
 }
 
 fun epochSecondsToSimpleDate(seconds: Long): String {

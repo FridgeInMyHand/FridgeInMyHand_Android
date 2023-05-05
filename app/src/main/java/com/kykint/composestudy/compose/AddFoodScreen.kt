@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,10 +49,11 @@ import java.time.format.DateTimeFormatter
 fun AddFoodScreen(
     viewModel: IAddFoodViewModel,
     onFabClick: () -> Unit = {},
-    onSendPhotoTestClicked: () -> Unit = {},
     onAddFoodItemClicked: () -> Unit = {},
-    onNameChanged: (Int, String) -> Unit = { _, _ -> },
-    onBestBeforeChanged: (Int, Long) -> Unit = { _, _ -> },
+    onFoodNameChanged: (Int, String) -> Unit = { _, _ -> },
+    onFoodBestBeforeChanged: (Int, Long) -> Unit = { _, _ -> },
+    onFoodAmountChanged: (Int, String) -> Unit = { _, _ -> },
+    onFoodPublicChanged: (Int, Boolean) -> Unit = { _, _ -> },
     onAddDoneClicked: () -> Unit = {},
     onItemRemoveClicked: (Int) -> Unit = {},
 ) {
@@ -62,7 +65,7 @@ fun AddFoodScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Add Food") })
+            TopAppBar(title = { Text("음식 추가") })
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -79,9 +82,10 @@ fun AddFoodScreen(
                 items = viewModel.items, // TODO: should be replaced with an empty list
                 viewModel = viewModel,
                 onAddFoodItemClicked = onAddFoodItemClicked,
-                onNameChanged = onNameChanged,
-                onBestBeforeChanged = onBestBeforeChanged,
-                onSendPhotoTestClicked = onSendPhotoTestClicked,
+                onFoodNameChanged = onFoodNameChanged,
+                onFoodBestBeforeChanged = onFoodBestBeforeChanged,
+                onFoodAmountChanged = onFoodAmountChanged,
+                onFoodPublicChanged = onFoodPublicChanged,
                 onAddDoneClicked = onAddDoneClicked,
                 onItemRemoveClicked = onItemRemoveClicked,
             )
@@ -112,11 +116,12 @@ private fun EditableFoodItemList(
     items: SnapshotStateList<Food>,
     viewModel: IAddFoodViewModel,
     onItemClick: (Int) -> Unit = {},
-    onNameChanged: (Int, String) -> Unit = { _, _ -> },
-    onBestBeforeChanged: (Int, Long) -> Unit = { _, _ -> },
+    onFoodNameChanged: (Int, String) -> Unit = { _, _ -> },
+    onFoodBestBeforeChanged: (Int, Long) -> Unit = { _, _ -> },
+    onFoodAmountChanged: (Int, String) -> Unit = { _, _ -> },
+    onFoodPublicChanged: (Int, Boolean) -> Unit = { _, _ -> },
     onAddFoodItemClicked: () -> Unit = {},
     onAddDoneClicked: () -> Unit = {},
-    onSendPhotoTestClicked: () -> Unit = {},
     onItemRemoveClicked: (Int) -> Unit = {},
 ) {
     // viewModel.detectedFoodNames.observeAsState().value?.let {
@@ -132,11 +137,17 @@ private fun EditableFoodItemList(
         itemsIndexed(items = items) { index, item ->
             EditableFoodItem(
                 item = item,
-                onNameChanged = {
-                    onNameChanged(index, it)
+                onFoodNameChanged = {
+                    onFoodNameChanged(index, it)
                 },
-                onBestBeforeChanged = {
-                    onBestBeforeChanged(index, it)
+                onFoodBestBeforeChanged = {
+                    onFoodBestBeforeChanged(index, it)
+                },
+                onFoodAmountChanged = {
+                    onFoodAmountChanged(index, it)
+                },
+                onFoodPublicChanged = {
+                    onFoodPublicChanged(index, it)
                 },
                 onItemRemoveClicked = {
                     onItemRemoveClicked(index)
@@ -180,10 +191,12 @@ private fun EditableFoodItemPreview() {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditableFoodItem(
+fun EditableFoodItem(
     item: Food,
-    onNameChanged: (String) -> Unit = {},
-    onBestBeforeChanged: (Long) -> Unit = {},
+    onFoodNameChanged: (String) -> Unit = {},
+    onFoodBestBeforeChanged: (Long) -> Unit = {},
+    onFoodAmountChanged: (String) -> Unit = {},
+    onFoodPublicChanged: (Boolean) -> Unit = {},
     onItemRemoveClicked: () -> Unit = {},
 ) {
     MyElevatedCard(
@@ -207,9 +220,18 @@ private fun EditableFoodItem(
         var foodBestBefore by remember { mutableStateOf(item.bestBefore) }.apply {
             value = item.bestBefore
         }
+        var foodAmount by remember { mutableStateOf(item.amount) }.apply {
+            value = item.amount
+        }
+        var foodPublic by remember { mutableStateOf(item.isPublic) }.apply {
+            value = item.isPublic
+        }
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
+        /**
+         * 유통기한 수정 버튼 클릭 시 나오는 캘린더
+         */
         CalendarDialog(
             state = calenderState,
             config = CalendarConfig(
@@ -220,18 +242,23 @@ private fun EditableFoodItem(
                 val epoch = it.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
                 selectedDate = it
                 foodBestBefore = epoch
-                onBestBeforeChanged(epoch)
+                onFoodBestBeforeChanged(epoch)
             },
         )
 
         Column(
             modifier = Modifier.background(MaterialTheme.colorScheme.surface),
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /**
+             * 음식 이름 입력칸
+             */
             CustomTextField(
                 value = foodName,
                 onValueChange = {
                     foodName = it
-                    onNameChanged(it)
+                    onFoodNameChanged(it)
                 },
                 placeholder = {
                     Text(
@@ -241,9 +268,16 @@ private fun EditableFoodItem(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, end = 8.dp, top = 8.dp),
+                    .padding(horizontal = 8.dp),
                 textStyle = MaterialTheme.typography.bodySmall,
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /**
+             * 음식 유통기한 입력 칸
+             * 수동 입력이 아닌 캘린더 버튼 통해 입력
+             */
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -259,7 +293,7 @@ private fun EditableFoodItem(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .padding(8.dp),
+                        .padding(horizontal = 8.dp),
                     enabled = false,
                     textStyle = MaterialTheme.typography.bodySmall,
                 )
@@ -290,6 +324,51 @@ private fun EditableFoodItem(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /**
+             * 음식 양 입력 칸
+             */
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CustomTextField(
+                    value = foodAmount ?: "",
+                    onValueChange = {
+                        foodAmount = it
+                        onFoodAmountChanged(it)
+                    },
+                    placeholder = {
+                        Text(
+                            "수량",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                )
+
+                Spacer(Modifier.width(16.dp))
+
+                Text(
+                    "공유",
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                    Checkbox(
+                        checked = foodPublic,
+                        onCheckedChange = {
+                            foodPublic = it
+                            onFoodPublicChanged(it)
+                        },
+                        modifier = Modifier.scale(0.7f),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

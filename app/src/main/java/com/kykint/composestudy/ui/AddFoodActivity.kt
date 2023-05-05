@@ -76,7 +76,8 @@ class AddFoodActivity : ComponentActivity() {
                                 PERM_REQ_CODE
                             )
                         }
-                    }
+                    },
+                    onItemRemoveClicked = viewModel::removeItem,
                 )
             }
         }

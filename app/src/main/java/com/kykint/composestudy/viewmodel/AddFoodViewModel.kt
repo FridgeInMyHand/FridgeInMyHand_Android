@@ -1,6 +1,7 @@
 package com.kykint.composestudy.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -32,10 +33,12 @@ abstract class IAddFoodViewModel : ViewModel() {
     abstract val state: StateFlow<State>
 
     // abstract val detectedFoodNames: LiveData<List<String>>
-    abstract val items: List<Food>
+    abstract val items: SnapshotStateList<Food>
 
     abstract fun onAddFoodItemClicked(): Unit
     abstract fun onPictureTaken(path: String): Unit
+
+    abstract fun removeItem(index: Int)
 }
 
 class AddFoodViewModel(
@@ -88,6 +91,10 @@ class AddFoodViewModel(
         //     }
     }
 
+    override fun removeItem(index: Int) {
+        items.removeAt(index)
+    }
+
     // https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories#kotlin_1
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
@@ -105,7 +112,7 @@ class DummyAddFoodViewModel : IAddFoodViewModel() {
 
     // private val _detectedFoodNames = MutableLiveData<List<String>>()
     // override val detectedFoodNames = _detectedFoodNames
-    override val items = listOf(
+    override val items = mutableStateListOf(
         Food(name = "김치"),
         Food(name = "시금치"),
         Food(name = "계란"),
@@ -114,4 +121,5 @@ class DummyAddFoodViewModel : IAddFoodViewModel() {
 
     override fun onAddFoodItemClicked() {}
     override fun onPictureTaken(path: String) {}
+    override fun removeItem(index: Int) {}
 }

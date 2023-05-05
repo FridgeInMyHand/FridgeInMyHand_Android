@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,14 +43,14 @@ fun MyElevatedCard(
     colors: CardColors = CardDefaults.elevatedCardColors(
         containerColor = MaterialTheme.colorScheme.surface
     ),
-    elevation: CardElevation = CardDefaults.cardElevation(8.dp),
+    elevation: CardElevation = CardDefaults.cardElevation(2.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Box(
         modifier = Modifier
             .padding(horizontal = cardHorizontalPadding, vertical = cardVerticalPadding),
     ) {
-        ElevatedCard(
+        Card(
             modifier = modifier,
             elevation = elevation,
             colors = colors,

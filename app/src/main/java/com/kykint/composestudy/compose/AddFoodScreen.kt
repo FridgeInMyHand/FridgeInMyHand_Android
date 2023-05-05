@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
@@ -19,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +51,7 @@ fun AddFoodScreen(
     onFabClick: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
     onAddDoneClicked: () -> Unit = {},
+    onItemRemoveClicked: (Int) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -76,6 +80,7 @@ fun AddFoodScreen(
                 onAddFoodItemClicked = viewModel::onAddFoodItemClicked,
                 onSendPhotoTestClicked = onSendPhotoTestClicked,
                 onAddDoneClicked = onAddDoneClicked,
+                onItemRemoveClicked = onItemRemoveClicked,
             )
         }
     }
@@ -94,19 +99,20 @@ private fun AddFoodScreenPreview() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun EditableFoodItemListPreview() {
-    val items = (1..3).map { i -> Food(name = "$i") }
+    val items = (1..3).map { i -> Food(name = "$i") }.toMutableStateList()
     EditableFoodItemList(items = items, viewModel = DummyAddFoodViewModel())
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun EditableFoodItemList(
-    items: List<Food>,
+    items: SnapshotStateList<Food>,
     viewModel: IAddFoodViewModel,
     onItemClick: (Int) -> Unit = {},
     onAddFoodItemClicked: () -> Unit = {},
     onAddDoneClicked: () -> Unit = {},
     onSendPhotoTestClicked: () -> Unit = {},
+    onItemRemoveClicked: (Int) -> Unit = {},
 ) {
     // viewModel.detectedFoodNames.observeAsState().value?.let {
     //     ComposableToast(message = "New items detected")
@@ -117,12 +123,16 @@ private fun EditableFoodItemList(
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         // TODO: key 추가 후 성능 향상 테스트
-        itemsIndexed(items) { index, item ->
+
+        itemsIndexed(items = items, key = { index: Int, item: Food -> index }) { index, item ->
             EditableFoodItem(
                 item = item,
                 onNameChanged = {
                     Log.e("AddFoodScreen", "========== $it =========")
-                }
+                },
+                onItemRemoveClicked = {
+                    onItemRemoveClicked(index)
+                },
             )
         }
 
@@ -165,7 +175,8 @@ private fun EditableFoodItemPreview() {
 private fun EditableFoodItem(
     item: Food,
     onNameChanged: (String) -> Unit = {},
-    onBestBeforeChanged: (Long) -> Unit = {}
+    onBestBeforeChanged: (Long) -> Unit = {},
+    onItemRemoveClicked: () -> Unit = {},
 ) {
     MyElevatedCard(
         modifier = Modifier
@@ -248,17 +259,31 @@ private fun EditableFoodItem(
                         .padding(8.dp),
                     enabled = false,
                 )
-                Button(
+                FilledTonalIconButton(
                     onClick = {
                         coroutineScope.launch {
                             calenderState.show()
                         }
                     },
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(horizontal = 8.dp),
+                        .padding(end = 4.dp)
+                        .size(32.dp),
                 ) {
-                    Icon(Icons.Filled.EditCalendar, "")
+                    Icon(
+                        Icons.Filled.EditCalendar, "",
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                FilledTonalIconButton(
+                    onClick = onItemRemoveClicked,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .size(32.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.Close, "",
+                        modifier = Modifier.size(16.dp),
+                    )
                 }
             }
         }

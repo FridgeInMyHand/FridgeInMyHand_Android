@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.kykint.fridgeinmyhand.repository.UserAccountInfoRepository
+import com.kykint.fridgeinmyhand.utils.Prefs
 import com.naver.maps.geometry.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,6 +82,7 @@ class EditUserAccountInfoViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
             repository.fetchUserAccountInfo(
+                Prefs.uuid,
                 onSuccess = { userAccountInfo ->
                     if (userAccountInfo.lat != null && userAccountInfo.long != null) {
                         // TODO: Change setValue() from background threads to postValue()
@@ -101,7 +103,7 @@ class EditUserAccountInfoViewModel(
         _uiState.value = UiState.Loading
 
         viewModelScope.launch(Dispatchers.IO) {
-            repository.saveUserLocation(
+            repository.saveMyLocation(
                 newLatLng,
                 onSuccess = {
                     loadInfos()
@@ -123,7 +125,7 @@ class EditUserAccountInfoViewModel(
         _uiState.value = UiState.Loading
 
         viewModelScope.launch(Dispatchers.IO) {
-            repository.saveUserKakaoTalkLink(
+            repository.saveMyKakaoTalkLink(
                 newLink,
                 onSuccess = {
                     loadInfos()

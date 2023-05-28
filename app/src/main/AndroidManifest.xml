@@ -41,6 +41,7 @@
         <activity android:name="com.kykint.fridgeinmyhand.ui.AddFoodActivity" />
         <activity android:name="com.kykint.fridgeinmyhand.ui.EditUserAccountInfoActivity" />
         <activity android:name="com.kykint.fridgeinmyhand.ui.LocationChooseActivity" />
+        <activity android:name="com.kykint.fridgeinmyhand.ui.FoodShareActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -78,6 +78,17 @@ interface FridgeApiService {
         @Body param: PostUserUrlModel,
     ): Call<Void>
 
+    /**
+     * 근처 사용자 정보 받아오기
+     */
+    @GET("/nearbyUser")
+    fun getNearbyUser(
+        @Query("UUID") uuid: String,
+        @Query("lat") lat: Double,
+        @Query("long") long: Double,
+        @Query("lat_limit") lat_limit: Double,
+        @Query("long_limit") long_limit: Double,
+    ): Call<NearbyUserResponse>
 }
 
 object FridgeApiClient {
@@ -522,15 +533,15 @@ object FridgeApi {
     ) = getFoodList(Prefs.uuid, onSuccess, onFailure)
 
     /**
-     * 내 음식 목록 받아오기
+     * 음식 목록 받아오기
      */
     @WorkerThread
     suspend fun getFoodList(
-        targetUUID: String,
+        requestUUID: String,
         onSuccess: (FoodListResponse) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
-        val call = FridgeApiClient.service.getFood(Prefs.uuid, targetUUID)
+        val call = FridgeApiClient.service.getFood(requestUUID, Prefs.uuid)
 
         call.enqueue(object : Callback<FoodListResponse> {
             override fun onResponse(
@@ -646,10 +657,11 @@ object FridgeApi {
      */
     @WorkerThread
     suspend fun getUserAccountInfo(
+        uuid: String,
         onSuccess: (UserAccountInfoResponse) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
-        val call = FridgeApiClient.service.getUser(Prefs.uuid)
+        val call = FridgeApiClient.service.getUser(uuid)
 
         call.enqueue(object : Callback<UserAccountInfoResponse> {
             override fun onResponse(
@@ -726,6 +738,37 @@ object FridgeApi {
             }
 
             override fun onFailure(call: Call<Void>, t: Throwable) {
+                onFailure()
+            }
+        })
+    }
+
+    /**
+     * 근처 사용자 정보 받아오기
+     */
+    @WorkerThread
+    suspend fun getNearbyUsers(
+        lat: Double, long: Double, lat_limit: Double, long_limit: Double,
+        onSuccess: (NearbyUserResponse) -> Unit = {},
+        onFailure: () -> Unit = {},
+    ) {
+        val call = FridgeApiClient.service.getNearbyUser(
+            Prefs.uuid, lat, long, lat_limit, long_limit
+        )
+
+        call.enqueue(object : Callback<NearbyUserResponse> {
+            override fun onResponse(
+                call: Call<NearbyUserResponse>,
+                response: Response<NearbyUserResponse>
+            ) {
+                if (response.isSuccessful && response.body() != null) {
+                    onSuccess(response.body()!!)
+                } else {
+                    onFailure()
+                }
+            }
+
+            override fun onFailure(call: Call<NearbyUserResponse>, t: Throwable) {
                 onFailure()
             }
         })

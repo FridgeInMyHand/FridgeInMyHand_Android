@@ -61,3 +61,23 @@ data class UserAccountInfoResponse(
     @SerializedName("url")
     val url: String?,
 ) : BaseResponse
+
+/**
+ * 주변 사용자 정보 응답
+ *
+ * GET /nearbyUser
+ */
+class NearbyUserResponse
+    : ArrayList<NearbyUserResponse.Content>(), BaseResponse {
+
+    data class Content(
+        @SerializedName("UUID")
+        val uuid: String,
+
+        @SerializedName("lat")
+        val lat: Double,
+
+        @SerializedName("long")
+        val long: Double,
+    )
+}

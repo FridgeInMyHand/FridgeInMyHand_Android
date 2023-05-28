@@ -9,15 +9,16 @@ interface IUserAccountInfoRepository {
 
     @WorkerThread
     suspend fun fetchUserAccountInfo(
+        uuid: String,
         onSuccess: (UserAccountInfo) -> Unit = {},
         onFailure: () -> Unit = {}
     )
 
     @WorkerThread
-    suspend fun saveUserLocation(latLng: LatLng, onSuccess: () -> Unit, onFailure: () -> Unit)
+    suspend fun saveMyLocation(latLng: LatLng, onSuccess: () -> Unit, onFailure: () -> Unit)
 
     @WorkerThread
-    suspend fun saveUserKakaoTalkLink(url: String, onSuccess: () -> Unit, onFailure: () -> Unit)
+    suspend fun saveMyKakaoTalkLink(url: String, onSuccess: () -> Unit, onFailure: () -> Unit)
 }
 
 class UserAccountInfoRepository : IUserAccountInfoRepository {
@@ -27,10 +28,12 @@ class UserAccountInfoRepository : IUserAccountInfoRepository {
      */
     @WorkerThread
     override suspend fun fetchUserAccountInfo(
+        uuid: String,
         onSuccess: (UserAccountInfo) -> Unit,
         onFailure: () -> Unit,
     ) {
         FridgeApi.getUserAccountInfo(
+            uuid,
             onSuccess = {
                 onSuccess(UserAccountInfo(it.lat, it.long, it.url))
             },
@@ -42,7 +45,7 @@ class UserAccountInfoRepository : IUserAccountInfoRepository {
      * 사용자 위치 정보 저장
      */
     @WorkerThread
-    override suspend fun saveUserLocation(
+    override suspend fun saveMyLocation(
         latLng: LatLng,
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
@@ -58,7 +61,7 @@ class UserAccountInfoRepository : IUserAccountInfoRepository {
      * 사용자 카카오톡 오픈채팅 링크 저장
      */
     @WorkerThread
-    override suspend fun saveUserKakaoTalkLink(
+    override suspend fun saveMyKakaoTalkLink(
         url: String,
         onSuccess: () -> Unit,
         onFailure: () -> Unit,

@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.kykint.fridgeinmyhand.data.Food
-import com.kykint.fridgeinmyhand.repository.IMyFoodListRepository
-import com.kykint.fridgeinmyhand.repository.MyFoodListRepositoryImpl
+import com.kykint.fridgeinmyhand.repository.FoodListRepositoryImpl
+import com.kykint.fridgeinmyhand.repository.IFoodListRepository
 import com.kykint.fridgeinmyhand.utils.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,7 +72,7 @@ abstract class IFridgeMainViewModel : ViewModel() {
 }
 
 class FridgeMainViewModel(
-    private val repository: IMyFoodListRepository,
+    private val repository: IFoodListRepository,
 ) : IFridgeMainViewModel() {
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Normal)
     override val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -86,7 +86,7 @@ class FridgeMainViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val repo = MyFoodListRepositoryImpl
+                val repo = FoodListRepositoryImpl
                 return FridgeMainViewModel(repo) as T
             }
         }
@@ -94,7 +94,7 @@ class FridgeMainViewModel(
 
     // private val _foods: MutableLiveData<List<MyModel>> = MutableLiveData()
     // override val foods: LiveData<List<MyModel>> = _myModels
-    override var foods = MyFoodListRepositoryImpl.foods
+    override var foods = FoodListRepositoryImpl.foods
         private set
 
     // override val onItemClickEvent: MutableLiveData<MyModel> = MutableLiveData()
@@ -103,7 +103,7 @@ class FridgeMainViewModel(
     override fun refreshFoods() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
-            repository.fetchFoodList(
+            repository.fetchMyFoodList(
                 onSuccess = {
                     _uiState.value = UiState.Success
                 },
@@ -135,7 +135,7 @@ class FridgeMainViewModel(
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
-            repository.updateFood(
+            repository.updateMyFood(
                 position,
                 newName, newBestBefore, newAmount, newPublic,
                 onSuccess = {
@@ -176,7 +176,7 @@ class FridgeMainViewModel(
     override fun deleteFood(position: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
-            repository.deleteFood(
+            repository.deleteMyFood(
                 position,
                 onSuccess = {
                     refreshFoods()

@@ -40,6 +40,11 @@ class FridgeMainActivity : ComponentActivity() {
                     onEditFoodDoneClicked = viewModel::saveEditedFood,
                     onEditFoodCancelClicked = viewModel::cancelEditFood,
                     onDeleteFoodClicked = viewModel::deleteFood,
+                    onShareFoodClicked = {
+                        startActivity(
+                            Intent(this, FoodShareActivity::class.java),
+                        )
+                    },
                     onEditUserAccountInfoClicked = {
                         startActivity(
                             Intent(this, EditUserAccountInfoActivity::class.java),

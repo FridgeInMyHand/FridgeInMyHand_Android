@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material3.*
@@ -62,6 +63,7 @@ fun FridgeMainScreen(
     onEditFoodDoneClicked: (Int, Food) -> Unit = { _, _ -> },
     onEditFoodCancelClicked: () -> Unit = {},
     onDeleteFoodClicked: (Int) -> Unit = {},
+    onShareFoodClicked: () -> Unit = {},
     onEditUserAccountInfoClicked: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -87,6 +89,14 @@ fun FridgeMainScreen(
             TopAppBar(
                 title = { Text("음식 목록") },
                 actions = {
+                    IconButton(
+                        onClick = onShareFoodClicked,
+                    ) {
+                        Icon(
+                            painter = rememberVectorPainter(Icons.Filled.Map),
+                            contentDescription = "음식 공유",
+                        )
+                    }
                     IconButton(
                         onClick = onEditUserAccountInfoClicked,
                     ) {
@@ -148,8 +158,9 @@ private fun FridgeMainScreenPreview() {
 }
 
 @Composable
-private fun FoodList(
+fun FoodList(
     models: List<Food>,
+    isMyFood: Boolean = true,
     onItemClick: (Int) -> Unit = {},
     onFoodPropertyChanged: (Int, String?, Long?, String?, Boolean?) -> Unit =
         { _, _, _, _, _ -> },
@@ -168,6 +179,7 @@ private fun FoodList(
         ) { index, item ->
             FoodItemCard(
                 food = item,
+                isMyFood = isMyFood,
                 onClick = {
                     onItemClick(index)
                 },

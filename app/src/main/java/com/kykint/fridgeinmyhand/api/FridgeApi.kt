@@ -58,7 +58,7 @@ interface FridgeApiService {
     @GET("/user")
     fun getUser(
         @Query("UUID") uuid: String,
-    ): Call<UserInfoResponse>
+    ): Call<UserAccountInfoResponse>
 
     /**
      * 사용자 위치 등록
@@ -645,16 +645,16 @@ object FridgeApi {
      * 사용자 목록 받아오기
      */
     @WorkerThread
-    suspend fun getUserInfo(
-        onSuccess: (UserInfoResponse) -> Unit = {},
+    suspend fun getUserAccountInfo(
+        onSuccess: (UserAccountInfoResponse) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
         val call = FridgeApiClient.service.getUser(Prefs.uuid)
 
-        call.enqueue(object : Callback<UserInfoResponse> {
+        call.enqueue(object : Callback<UserAccountInfoResponse> {
             override fun onResponse(
-                call: Call<UserInfoResponse>,
-                response: Response<UserInfoResponse>
+                call: Call<UserAccountInfoResponse>,
+                response: Response<UserAccountInfoResponse>
             ) {
                 if (response.isSuccessful && response.body() != null) {
                     onSuccess(response.body()!!)
@@ -663,7 +663,7 @@ object FridgeApi {
                 }
             }
 
-            override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
+            override fun onFailure(call: Call<UserAccountInfoResponse>, t: Throwable) {
                 onFailure()
             }
         })

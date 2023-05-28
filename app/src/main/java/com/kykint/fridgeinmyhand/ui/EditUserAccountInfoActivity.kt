@@ -7,14 +7,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import com.kykint.fridgeinmyhand.compose.EditUserInfoScreen
+import com.kykint.fridgeinmyhand.compose.EditUserAccountInfoScreen
 import com.kykint.fridgeinmyhand.ui.theme.FridgeInMyHandTheme
-import com.kykint.fridgeinmyhand.viewmodel.EditUserInfoViewModel
+import com.kykint.fridgeinmyhand.viewmodel.EditUserAccountInfoViewModel
 import com.naver.maps.geometry.LatLng
 
-class EditUserInfoActivity : ComponentActivity() {
+class EditUserAccountInfoActivity : ComponentActivity() {
 
-    private val viewModel: EditUserInfoViewModel by viewModels { EditUserInfoViewModel.Factory }
+    private val viewModel: EditUserAccountInfoViewModel by viewModels { EditUserAccountInfoViewModel.Factory }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +22,7 @@ class EditUserInfoActivity : ComponentActivity() {
 
         setContent {
             FridgeInMyHandTheme {
-                EditUserInfoScreen(
+                EditUserAccountInfoScreen(
                     viewModel,
                     onLocationChooseClicked = {
                         startActivityForResult(

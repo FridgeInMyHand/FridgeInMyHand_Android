@@ -2,13 +2,16 @@ package com.kykint.fridgeinmyhand.repository
 
 import androidx.annotation.WorkerThread
 import com.kykint.fridgeinmyhand.api.FridgeApi
-import com.kykint.fridgeinmyhand.data.UserInfo
+import com.kykint.fridgeinmyhand.data.UserAccountInfo
 import com.naver.maps.geometry.LatLng
 
-interface IUserInfoRepository {
+interface IUserAccountInfoRepository {
 
     @WorkerThread
-    suspend fun fetchUserInfo(onSuccess: (UserInfo) -> Unit = {}, onFailure: () -> Unit = {})
+    suspend fun fetchUserAccountInfo(
+        onSuccess: (UserAccountInfo) -> Unit = {},
+        onFailure: () -> Unit = {}
+    )
 
     @WorkerThread
     suspend fun saveUserLocation(latLng: LatLng, onSuccess: () -> Unit, onFailure: () -> Unit)
@@ -17,19 +20,19 @@ interface IUserInfoRepository {
     suspend fun saveUserKakaoTalkLink(url: String, onSuccess: () -> Unit, onFailure: () -> Unit)
 }
 
-class UserInfoRepository : IUserInfoRepository {
+class UserAccountInfoRepository : IUserAccountInfoRepository {
 
     /**
      * 사용자 정보 가져오기
      */
     @WorkerThread
-    override suspend fun fetchUserInfo(
-        onSuccess: (UserInfo) -> Unit,
+    override suspend fun fetchUserAccountInfo(
+        onSuccess: (UserAccountInfo) -> Unit,
         onFailure: () -> Unit,
     ) {
-        FridgeApi.getUserInfo(
+        FridgeApi.getUserAccountInfo(
             onSuccess = {
-                onSuccess(UserInfo(it.lat, it.long, it.url))
+                onSuccess(UserAccountInfo(it.lat, it.long, it.url))
             },
             onFailure = onFailure,
         )

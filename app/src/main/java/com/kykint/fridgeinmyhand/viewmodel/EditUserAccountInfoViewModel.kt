@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.kykint.fridgeinmyhand.repository.UserInfoRepository
+import com.kykint.fridgeinmyhand.repository.UserAccountInfoRepository
 import com.naver.maps.geometry.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for EditUserInfoActivity
+ * ViewModel for EditUserAccountInfoActivity
  */
-abstract class IEditUserInfoViewModel : ViewModel() {
+abstract class IEditUserAccountInfoViewModel : ViewModel() {
 
     sealed class UiState {
         object Normal : UiState()
@@ -47,17 +47,17 @@ abstract class IEditUserInfoViewModel : ViewModel() {
     abstract fun onEditUserKakaoTalkLinkDone(newLink: String)
 }
 
-class EditUserInfoViewModel(
-    private val repository: UserInfoRepository,
-) : IEditUserInfoViewModel() {
+class EditUserAccountInfoViewModel(
+    private val repository: UserAccountInfoRepository,
+) : IEditUserAccountInfoViewModel() {
 
     // https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories#kotlin_1
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val repo = UserInfoRepository()
-                return EditUserInfoViewModel(repo) as T
+                val repo = UserAccountInfoRepository()
+                return EditUserAccountInfoViewModel(repo) as T
             }
         }
     }
@@ -80,13 +80,13 @@ class EditUserInfoViewModel(
     override fun loadInfos() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
-            repository.fetchUserInfo(
-                onSuccess = { userInfo ->
-                    if (userInfo.lat != null && userInfo.long != null) {
+            repository.fetchUserAccountInfo(
+                onSuccess = { userAccountInfo ->
+                    if (userAccountInfo.lat != null && userAccountInfo.long != null) {
                         // TODO: Change setValue() from background threads to postValue()
-                        _userLocation.value = LatLng(userInfo.lat, userInfo.long)
+                        _userLocation.value = LatLng(userAccountInfo.lat, userAccountInfo.long)
                     }
-                    userInfo.url?.let { _kakaoTalkLink.value = it }
+                    userAccountInfo.url?.let { _kakaoTalkLink.value = it }
 
                     _uiState.value = UiState.Normal
                 },
@@ -139,7 +139,7 @@ class EditUserInfoViewModel(
 /**
  * Used for preview
  */
-class DummyEditUserInfoViewModel : IEditUserInfoViewModel() {
+class DummyEditUserAccountInfoViewModel : IEditUserAccountInfoViewModel() {
     override val uiState: StateFlow<UiState> = MutableStateFlow(UiState.Normal).asStateFlow()
     override val editingState: StateFlow<EditingState> =
         MutableStateFlow(EditingState.Normal).asStateFlow()

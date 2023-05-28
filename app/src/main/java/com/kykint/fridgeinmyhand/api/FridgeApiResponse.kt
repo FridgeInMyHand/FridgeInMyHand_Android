@@ -50,7 +50,7 @@ class FoodClassificationResponse
  *
  * GET /user
  */
-data class UserInfoResponse(
+data class UserAccountInfoResponse(
 
     @SerializedName("lat")
     val lat: Double?,

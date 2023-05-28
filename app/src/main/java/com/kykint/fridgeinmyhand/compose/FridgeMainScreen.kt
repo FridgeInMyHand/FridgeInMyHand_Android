@@ -62,7 +62,7 @@ fun FridgeMainScreen(
     onEditFoodDoneClicked: (Int, Food) -> Unit = { _, _ -> },
     onEditFoodCancelClicked: () -> Unit = {},
     onDeleteFoodClicked: (Int) -> Unit = {},
-    onEditUserInfoClicked: () -> Unit = {},
+    onEditUserAccountInfoClicked: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val editingState by viewModel.editingState.collectAsState()
@@ -88,7 +88,7 @@ fun FridgeMainScreen(
                 title = { Text("음식 목록") },
                 actions = {
                     IconButton(
-                        onClick = onEditUserInfoClicked,
+                        onClick = onEditUserAccountInfoClicked,
                     ) {
                         Icon(
                             painter = rememberVectorPainter(Icons.Filled.Person),

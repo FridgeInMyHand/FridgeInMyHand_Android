@@ -18,25 +18,25 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ComposeStudy"
+        android:theme="@style/Theme.FridgeInMyHand"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
             android:name=".ui.FridgeMainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.ComposeStudy">
+            android:theme="@style/Theme.FridgeInMyHand">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.kykint.composestudy.ui.AddFoodActivity" />
+        <activity android:name="com.kykint.fridgeinmyhand.ui.AddFoodActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.kykint.composestudy"
+            android:authorities="com.kykint.fridgeinmyhand"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

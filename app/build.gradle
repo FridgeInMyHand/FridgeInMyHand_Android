@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.kykint.composestudy'
+    namespace 'com.kykint.fridgeinmyhand'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.kykint.composestudy"
+        applicationId "com.kykint.fridgeinmyhand"
         minSdk 24
         targetSdk 33
         versionCode 1

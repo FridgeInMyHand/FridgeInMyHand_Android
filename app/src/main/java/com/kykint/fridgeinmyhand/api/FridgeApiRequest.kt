@@ -47,3 +47,32 @@ data class PostFoodListModel(
         return this
     }
 }
+
+/**
+ * 사용자 위치 등록 Request
+ *
+ * POST /userLocation
+ */
+data class PostUserLocationModel(
+    @SerializedName("UUID")
+    val uuid: String,
+
+    @SerializedName("lat")
+    val lat: Double,
+
+    @SerializedName("long")
+    val long: Double,
+)
+
+/**
+ * 사용자 카카오톡 오픈채팅 링크 등록 Request
+ *
+ * POST /userURL
+ */
+data class PostUserUrlModel(
+    @SerializedName("UUID")
+    val uuid: String,
+
+    @SerializedName("url")
+    val url: String,
+)

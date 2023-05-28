@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -61,6 +62,7 @@ fun FridgeMainScreen(
     onEditFoodDoneClicked: (Int, Food) -> Unit = { _, _ -> },
     onEditFoodCancelClicked: () -> Unit = {},
     onDeleteFoodClicked: (Int) -> Unit = {},
+    onEditUserInfoClicked: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val editingState by viewModel.editingState.collectAsState()
@@ -82,7 +84,19 @@ fun FridgeMainScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("음식 목록") })
+            TopAppBar(
+                title = { Text("음식 목록") },
+                actions = {
+                    IconButton(
+                        onClick = onEditUserInfoClicked,
+                    ) {
+                        Icon(
+                            painter = rememberVectorPainter(Icons.Filled.Person),
+                            contentDescription = "사용자 정보",
+                        )
+                    }
+                },
+            )
         },
         floatingActionButton = {
             FloatingActionButton(

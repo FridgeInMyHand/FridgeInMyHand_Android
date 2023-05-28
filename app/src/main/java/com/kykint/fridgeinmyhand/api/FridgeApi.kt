@@ -7,6 +7,7 @@ import com.kykint.fridgeinmyhand.App
 import com.kykint.fridgeinmyhand.data.Food
 import com.kykint.fridgeinmyhand.utils.Prefs
 import com.kykint.fridgeinmyhand.utils.saveAsFile
+import com.naver.maps.geometry.LatLng
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -50,6 +51,33 @@ interface FridgeApiService {
     fun postDetect(
         @Part file: MultipartBody.Part,
     ): Call<FoodClassificationResponse>
+
+    /**
+     * 사용자 정보 받아오기
+     */
+    @GET("/user")
+    fun getUser(
+        @Query("UUID") uuid: String,
+    ): Call<UserInfoResponse>
+
+    /**
+     * 사용자 위치 등록
+     * 요청 형식: application/json
+     */
+    @POST("/userLocation")
+    fun postUserLocation(
+        @Body param: PostUserLocationModel,
+    ): Call<Void>
+
+    /**
+     * 사용자 카카오톡 링크 등록
+     * 요청 형식: application/json
+     */
+    @POST("/userURL")
+    fun postUserUrl(
+        @Body param: PostUserUrlModel,
+    ): Call<Void>
+
 }
 
 object FridgeApiClient {
@@ -608,6 +636,96 @@ object FridgeApi {
                     App.context, "Couldn't even establish connection!",
                     Toast.LENGTH_SHORT
                 ).show()
+                onFailure()
+            }
+        })
+    }
+
+    /**
+     * 사용자 목록 받아오기
+     */
+    @WorkerThread
+    suspend fun getUserInfo(
+        onSuccess: (UserInfoResponse) -> Unit = {},
+        onFailure: () -> Unit = {},
+    ) {
+        val call = FridgeApiClient.service.getUser(Prefs.uuid)
+
+        call.enqueue(object : Callback<UserInfoResponse> {
+            override fun onResponse(
+                call: Call<UserInfoResponse>,
+                response: Response<UserInfoResponse>
+            ) {
+                if (response.isSuccessful && response.body() != null) {
+                    onSuccess(response.body()!!)
+                } else {
+                    onFailure()
+                }
+            }
+
+            override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
+                onFailure()
+            }
+        })
+    }
+
+    /**
+     * 사용자 위치 정보 저장
+     */
+    @WorkerThread
+    suspend fun saveUserLocation(
+        latLng: LatLng,
+        onSuccess: () -> Unit = {},
+        onFailure: () -> Unit = {},
+    ) {
+        val call = FridgeApiClient.service.postUserLocation(
+            PostUserLocationModel(Prefs.uuid, latLng.latitude, latLng.longitude)
+        )
+
+        call.enqueue(object : Callback<Void> {
+            override fun onResponse(
+                call: Call<Void>,
+                response: Response<Void>
+            ) {
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onFailure()
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                onFailure()
+            }
+        })
+    }
+
+    /**
+     * 사용자 카카오톡 링크 저장
+     */
+    @WorkerThread
+    suspend fun saveUserKakaoTalkLink(
+        url: String,
+        onSuccess: () -> Unit = {},
+        onFailure: () -> Unit = {},
+    ) {
+        val call = FridgeApiClient.service.postUserUrl(
+            PostUserUrlModel(Prefs.uuid, url)
+        )
+
+        call.enqueue(object : Callback<Void> {
+            override fun onResponse(
+                call: Call<Void>,
+                response: Response<Void>
+            ) {
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onFailure()
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
                 onFailure()
             }
         })

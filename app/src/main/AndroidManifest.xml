@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:name=".App"
@@ -21,6 +23,10 @@
         android:theme="@style/Theme.FridgeInMyHand"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="z88pdgdt3k" />
+
         <activity
             android:name=".ui.FridgeMainActivity"
             android:exported="true"
@@ -33,6 +39,8 @@
             </intent-filter>
         </activity>
         <activity android:name="com.kykint.fridgeinmyhand.ui.AddFoodActivity" />
+        <activity android:name="com.kykint.fridgeinmyhand.ui.EditUserInfoActivity" />
+        <activity android:name="com.kykint.fridgeinmyhand.ui.LocationChooseActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

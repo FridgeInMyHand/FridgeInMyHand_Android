@@ -44,3 +44,20 @@ class FoodClassificationResponse
         val data: String,
     )
 }
+
+/**
+ * 사용자 정보 응답
+ *
+ * GET /user
+ */
+data class UserInfoResponse(
+
+    @SerializedName("lat")
+    val lat: Double?,
+
+    @SerializedName("long")
+    val long: Double?,
+
+    @SerializedName("url")
+    val url: String?,
+) : BaseResponse

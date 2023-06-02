@@ -1,5 +1,6 @@
 package com.kykint.fridgeinmyhand.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -79,23 +80,21 @@ class EditUserAccountInfoViewModel(
         get() = _kakaoTalkLink
 
     override fun loadInfos() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _uiState.value = UiState.Loading
-            repository.fetchUserAccountInfo(
-                Prefs.uuid,
-                onSuccess = { userAccountInfo ->
-                    if (userAccountInfo.lat != null && userAccountInfo.long != null) {
-                        // TODO: Change setValue() from background threads to postValue()
-                        _userLocation.value = LatLng(userAccountInfo.lat, userAccountInfo.long)
-                    }
-                    userAccountInfo.url?.let { _kakaoTalkLink.value = it }
+            repository.fetchUserAccountInfo(Prefs.uuid)?.let { userAccountInfo ->
+                if (userAccountInfo.lat != null && userAccountInfo.long != null) {
+                    // TODO: Change setValue() from background threads to postValue()
+                    // This one runs on a main thread, so it's the right place for setValue()
+                    _userLocation.value = LatLng(userAccountInfo.lat, userAccountInfo.long)
+                    Log.e("COROUTINE", Thread.currentThread().toString())
+                }
+                userAccountInfo.url?.let { _kakaoTalkLink.value = it }
 
-                    _uiState.value = UiState.Normal
-                },
-                onFailure = {
-                    _uiState.value = UiState.Failure
-                },
-            )
+                _uiState.value = UiState.Normal
+            } ?: run {
+                _uiState.value = UiState.Failure
+            }
         }
     }
 

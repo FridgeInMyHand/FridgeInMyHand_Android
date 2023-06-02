@@ -1,6 +1,7 @@
 package com.kykint.fridgeinmyhand.utils
 
 import android.graphics.Bitmap
+import android.os.Looper
 import org.threeten.bp.Instant
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.ZoneId
@@ -55,3 +56,6 @@ fun Bitmap.saveAsFile(outputPath: String): File? {
         null
     }
 }
+
+val isMainThread
+    get() = Looper.getMainLooper().isCurrentThread

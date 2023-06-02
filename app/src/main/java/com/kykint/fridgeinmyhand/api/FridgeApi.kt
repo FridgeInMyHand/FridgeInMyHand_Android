@@ -16,6 +16,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -29,10 +30,10 @@ interface FridgeApiService {
      * 음식 목록 받아오기
      */
     @GET("/food")
-    fun getFood(
+    suspend fun getFood(
         @Query("RequestUUID") requestUUID: String,
         @Query("UserUUID") userUUID: String,
-    ): Call<FoodListResponse>
+    ): Response<FoodListResponse>
 
     /**
      * 음식 목록 서버에 저장
@@ -56,9 +57,9 @@ interface FridgeApiService {
      * 사용자 정보 받아오기
      */
     @GET("/user")
-    fun getUser(
+    suspend fun getUser(
         @Query("UUID") uuid: String,
-    ): Call<UserAccountInfoResponse>
+    ): Response<UserAccountInfoResponse>
 
     /**
      * 사용자 위치 등록
@@ -112,7 +113,7 @@ object FridgeApiClient {
         */
         .build()
 
-    val service: FridgeApiService = retrofit.create(FridgeApiService::class.java)
+    val service: FridgeApiService = retrofit.create()
 }
 
 object FridgeApi {
@@ -528,9 +529,8 @@ object FridgeApi {
      */
     @WorkerThread
     suspend fun getMyFoodList(
-        onSuccess: (FoodListResponse) -> Unit = {},
         onFailure: () -> Unit = {},
-    ) = getFoodList(Prefs.uuid, onSuccess, onFailure)
+    ) = getFoodList(Prefs.uuid, onFailure)
 
     /**
      * 음식 목록 받아오기
@@ -538,27 +538,12 @@ object FridgeApi {
     @WorkerThread
     suspend fun getFoodList(
         requestUUID: String,
-        onSuccess: (FoodListResponse) -> Unit = {},
         onFailure: () -> Unit = {},
-    ) {
-        val call = FridgeApiClient.service.getFood(requestUUID, Prefs.uuid)
-
-        call.enqueue(object : Callback<FoodListResponse> {
-            override fun onResponse(
-                call: Call<FoodListResponse>,
-                response: Response<FoodListResponse>
-            ) {
-                if (response.isSuccessful && response.body() != null) {
-                    onSuccess(response.body()!!)
-                } else {
-                    onFailure()
-                }
-            }
-
-            override fun onFailure(call: Call<FoodListResponse>, t: Throwable) {
-                onFailure()
-            }
-        })
+    ): FoodListResponse? {
+        return FridgeApiClient.service.getFood(requestUUID, Prefs.uuid)?.body() ?: run {
+            onFailure()
+            null
+        }
     }
 
     /**
@@ -658,27 +643,12 @@ object FridgeApi {
     @WorkerThread
     suspend fun getUserAccountInfo(
         uuid: String,
-        onSuccess: (UserAccountInfoResponse) -> Unit = {},
         onFailure: () -> Unit = {},
-    ) {
-        val call = FridgeApiClient.service.getUser(uuid)
-
-        call.enqueue(object : Callback<UserAccountInfoResponse> {
-            override fun onResponse(
-                call: Call<UserAccountInfoResponse>,
-                response: Response<UserAccountInfoResponse>
-            ) {
-                if (response.isSuccessful && response.body() != null) {
-                    onSuccess(response.body()!!)
-                } else {
-                    onFailure()
-                }
-            }
-
-            override fun onFailure(call: Call<UserAccountInfoResponse>, t: Throwable) {
-                onFailure()
-            }
-        })
+    ): UserAccountInfoResponse? {
+        return FridgeApiClient.service.getUser(uuid)?.body() ?: run {
+            onFailure()
+            null
+        }
     }
 
     /**

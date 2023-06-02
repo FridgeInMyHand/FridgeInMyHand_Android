@@ -15,6 +15,7 @@ import com.kykint.fridgeinmyhand.repository.IUserAccountInfoRepository
 import com.kykint.fridgeinmyhand.repository.IUserRepository
 import com.kykint.fridgeinmyhand.repository.UserAccountInfoRepository
 import com.kykint.fridgeinmyhand.repository.UserRepository
+import com.kykint.fridgeinmyhand.utils.isMainThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,36 +126,25 @@ class FoodShareViewModel(
         uuid: String,
     ) {
         fetchJob?.cancel()
-        fetchJob = viewModelScope.launch(Dispatchers.IO) {
+        fetchJob = viewModelScope.launch {
             _nearbyUserInfoState.value = NearbyUserInfoState.Loading
-            foodListRepository.fetchFoodList(
-                uuid,
-                onSuccess = { list ->
-                    // TODO: Fix this ugly nested coroutine job
-                    fetchJob = viewModelScope.launch(Dispatchers.IO) {
-                        userAccountInfoRepository.fetchUserAccountInfo(
-                            uuid,
-                            onSuccess = { userAccountInfo ->
-                                _nearbyUserFoods.postValue(list)
-                                _nearbyUserUrl.postValue(userAccountInfo.url)
-                                _nearbyUserInfoState.value = NearbyUserInfoState.Normal
-                                Log.e("fetchJob", "FETCH DONE")
-                                fetchJob = null
-                            },
-                            onFailure = {
-                                Log.e("fetchJob", "FETCH DONE")
-                                fetchJob = null
-                            }
-                        )
-                    }
-                },
-                onFailure = {
-                    _nearbyUserInfoState.value = NearbyUserInfoState.Failure
-                    Log.e("fetchJob", "FETCH DONE")
-                    fetchJob = null
-                }
-            )
+            val fetchedFoods = foodListRepository.fetchFoodList(uuid)
+            val fetchedUserInfo = userAccountInfoRepository.fetchUserAccountInfo(uuid)
 
+            if (fetchedFoods != null && fetchedUserInfo != null) {
+                if (isMainThread) {
+                    _nearbyUserFoods.value = fetchedFoods
+                    _nearbyUserUrl.value = fetchedUserInfo.url
+                } else {
+                    _nearbyUserFoods.postValue(fetchedFoods)
+                    _nearbyUserUrl.postValue(fetchedUserInfo.url)
+                }
+                _nearbyUserInfoState.value = NearbyUserInfoState.Normal
+                Log.e("fetchJob", "FETCH DONE WITH SUCCESS")
+            } else {
+                Log.e("fetchJob", "FETCH DONE WITH FAILURE")
+            }
+            fetchJob = null
         }
     }
 }

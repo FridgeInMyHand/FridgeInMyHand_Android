@@ -8,11 +8,7 @@ import com.naver.maps.geometry.LatLng
 interface IUserAccountInfoRepository {
 
     @WorkerThread
-    suspend fun fetchUserAccountInfo(
-        uuid: String,
-        onSuccess: (UserAccountInfo) -> Unit = {},
-        onFailure: () -> Unit = {}
-    )
+    suspend fun fetchUserAccountInfo(uuid: String, onFailure: () -> Unit = {}): UserAccountInfo?
 
     @WorkerThread
     suspend fun saveMyLocation(latLng: LatLng, onSuccess: () -> Unit, onFailure: () -> Unit)
@@ -29,16 +25,12 @@ class UserAccountInfoRepository : IUserAccountInfoRepository {
     @WorkerThread
     override suspend fun fetchUserAccountInfo(
         uuid: String,
-        onSuccess: (UserAccountInfo) -> Unit,
         onFailure: () -> Unit,
-    ) {
-        FridgeApi.getUserAccountInfo(
+    ): UserAccountInfo? {
+        return FridgeApi.getUserAccountInfo(
             uuid,
-            onSuccess = {
-                onSuccess(UserAccountInfo(it.lat, it.long, it.url))
-            },
             onFailure = onFailure,
-        )
+        )?.let { UserAccountInfo(it.lat, it.long, it.url) }
     }
 
     /**

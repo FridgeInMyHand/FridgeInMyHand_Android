@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.kykint.fridgeinmyhand.api.FridgeApi
 import com.kykint.fridgeinmyhand.data.Food
+import com.kykint.fridgeinmyhand.utils.isMainThread
 
 interface IFoodListRepository {
     val foods: LiveData<List<Food>>
@@ -48,9 +49,8 @@ interface IFoodListRepository {
     @WorkerThread
     suspend fun fetchFoodList(
         uuid: String,
-        onSuccess: (List<Food>) -> Unit,
-        onFailure: () -> Unit,
-    )
+        onFailure: () -> Unit = {},
+    ): List<Food>?
 }
 
 object FoodListRepositoryImpl : IFoodListRepository {
@@ -59,22 +59,12 @@ object FoodListRepositoryImpl : IFoodListRepository {
         get() = _foods
 
     @WorkerThread
-    override suspend fun fetchFoodList(
-        uuid: String,
-        onSuccess: (List<Food>) -> Unit,
-        onFailure: () -> Unit,
-    ) {
-        FridgeApi.getFoodList(
-            uuid,
-            onSuccess = { response ->
-                onSuccess(response.names.map {
-                    Food(
-                        it.name, it.bestBefore, it.amount, it.isPublic
-                    )
-                })
-            },
-            onFailure = onFailure
-        )
+    override suspend fun fetchFoodList(uuid: String, onFailure: () -> Unit): List<Food>? {
+        return FridgeApi.getFoodList(uuid, onFailure = onFailure)?.let { response ->
+            response.names.map {
+                Food(it.name, it.bestBefore, it.amount, it.isPublic)
+            }
+        }
     }
 
     @WorkerThread
@@ -82,18 +72,21 @@ object FoodListRepositoryImpl : IFoodListRepository {
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
     ) {
-        FridgeApi.getMyFoodList(
-            onSuccess = { response ->
-                // TODO: Handle failures
-                _foods.value = response.names.map {
-                    Food(
-                        it.name, it.bestBefore, it.amount, it.isPublic
-                    )
+        FridgeApi.getMyFoodList(onFailure = onFailure)?.let { response ->
+            // TODO: Handle failures
+            response.names.map {
+                Food(it.name, it.bestBefore, it.amount, it.isPublic)
+            }.let {
+                if (isMainThread) {
+                    _foods.value = it
+                } else {
+                    _foods.postValue(it)
                 }
-                onSuccess()
-            },
-            onFailure = onFailure
-        )
+            }
+            onSuccess()
+        } ?: run {
+            onFailure()
+        }
     }
 
     /**

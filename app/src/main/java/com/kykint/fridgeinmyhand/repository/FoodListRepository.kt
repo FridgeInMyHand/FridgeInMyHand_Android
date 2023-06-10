@@ -5,30 +5,31 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.kykint.fridgeinmyhand.api.FridgeApi
 import com.kykint.fridgeinmyhand.data.Food
+import com.kykint.fridgeinmyhand.utils.isMainThread
 
-interface IMyFoodListRepository {
+interface IFoodListRepository {
     val foods: LiveData<List<Food>>
 
-    suspend fun fetchFoodList(
+    suspend fun fetchMyFoodList(
         onSuccess: () -> Unit = {},
         onFailure: () -> Unit = {},
     )
 
     @WorkerThread
-    suspend fun addToFoodList(
+    suspend fun addToMyFoodList(
         newFoods: List<Food>,
         onSuccess: () -> Unit = {},
         onFailure: () -> Unit = {},
     )
 
     @WorkerThread
-    suspend fun saveFoodList(
+    suspend fun saveMyFoodList(
         onSuccess: () -> Unit = {},
         onFailure: () -> Unit = {},
     )
 
     @WorkerThread
-    suspend fun updateFood(
+    suspend fun updateMyFood(
         index: Int,
         newName: String?,
         newBestBefore: Long?,
@@ -39,42 +40,60 @@ interface IMyFoodListRepository {
     )
 
     @WorkerThread
-    suspend fun deleteFood(
+    suspend fun deleteMyFood(
         index: Int,
         onSuccess: () -> Unit = {},
         onFailure: () -> Unit = {},
     )
+
+    @WorkerThread
+    suspend fun fetchFoodList(
+        uuid: String,
+        onFailure: () -> Unit = {},
+    ): List<Food>?
 }
 
-object MyFoodListRepositoryImpl : IMyFoodListRepository {
+object FoodListRepositoryImpl : IFoodListRepository {
     private val _foods: MutableLiveData<List<Food>> = MutableLiveData()
     override val foods: LiveData<List<Food>>
         get() = _foods
 
     @WorkerThread
-    override suspend fun fetchFoodList(
+    override suspend fun fetchFoodList(uuid: String, onFailure: () -> Unit): List<Food>? {
+        return FridgeApi.getFoodList(uuid, onFailure = onFailure)?.let { response ->
+            response.names.map {
+                Food(it.name, it.bestBefore, it.amount, it.isPublic)
+            }
+        }
+    }
+
+    @WorkerThread
+    override suspend fun fetchMyFoodList(
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
     ) {
-        FridgeApi.getMyFoodList(
-            onSuccess = { response ->
-                // TODO: Handle failures
-                _foods.value = response.names.map {
-                    Food(
-                        it.name, it.bestBefore, it.amount, it.isPublic
-                    )
+        FridgeApi.getMyFoodList(onFailure = onFailure)?.let { response ->
+            // TODO: Handle failures
+            response.names.map {
+                Food(it.name, it.bestBefore, it.amount, it.isPublic)
+            }.let {
+                if (isMainThread) {
+                    _foods.value = it
+                } else {
+                    _foods.postValue(it)
                 }
-                onSuccess()
-            },
-            onFailure = onFailure
-        )
+            }
+            onSuccess()
+        } ?: run {
+            onFailure()
+        }
     }
 
     /**
      * 기존 음식 목록에 foods 목록을 추가하여 서버에 저장
      */
     @WorkerThread
-    override suspend fun addToFoodList(
+    override suspend fun addToMyFoodList(
         newFoods: List<Food>,
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
@@ -90,7 +109,7 @@ object MyFoodListRepositoryImpl : IMyFoodListRepository {
      * 기존 음식 목록 그대로 서버에 저장
      */
     @WorkerThread
-    override suspend fun saveFoodList(
+    override suspend fun saveMyFoodList(
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
     ) {
@@ -105,7 +124,7 @@ object MyFoodListRepositoryImpl : IMyFoodListRepository {
      * 음식 아이템 정보 업데이트
      */
     @WorkerThread
-    override suspend fun updateFood(
+    override suspend fun updateMyFood(
         index: Int,
         newName: String?,
         newBestBefore: Long?,
@@ -140,7 +159,7 @@ object MyFoodListRepositoryImpl : IMyFoodListRepository {
      * 음식 삭제
      */
     @WorkerThread
-    override suspend fun deleteFood(
+    override suspend fun deleteMyFood(
         index: Int,
         onSuccess: () -> Unit,
         onFailure: () -> Unit,

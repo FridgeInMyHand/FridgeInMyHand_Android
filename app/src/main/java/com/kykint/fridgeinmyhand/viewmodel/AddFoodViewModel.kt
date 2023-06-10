@@ -8,8 +8,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.kykint.fridgeinmyhand.data.Food
 import com.kykint.fridgeinmyhand.repository.AddFoodRepositoryImpl
+import com.kykint.fridgeinmyhand.repository.FoodListRepositoryImpl
 import com.kykint.fridgeinmyhand.repository.IAddFoodRepository
-import com.kykint.fridgeinmyhand.repository.MyFoodListRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -118,7 +118,7 @@ class AddFoodViewModel(
     ) {
         viewModelScope.launch {
             _state.value = State.Loading
-            MyFoodListRepositoryImpl.addToFoodList(
+            FoodListRepositoryImpl.addToMyFoodList(
                 items,
                 onSuccess = {
                     _state.value = State.Success

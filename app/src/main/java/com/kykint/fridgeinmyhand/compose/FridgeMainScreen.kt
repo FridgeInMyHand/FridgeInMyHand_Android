@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material3.*
@@ -25,6 +26,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,7 +64,8 @@ fun FridgeMainScreen(
     onEditFoodDoneClicked: (Int, Food) -> Unit = { _, _ -> },
     onEditFoodCancelClicked: () -> Unit = {},
     onDeleteFoodClicked: (Int) -> Unit = {},
-    onEditUserInfoClicked: () -> Unit = {},
+    onShareFoodClicked: () -> Unit = {},
+    onEditUserAccountInfoClicked: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val editingState by viewModel.editingState.collectAsState()
@@ -88,7 +91,15 @@ fun FridgeMainScreen(
                 title = { Text("음식 목록") },
                 actions = {
                     IconButton(
-                        onClick = onEditUserInfoClicked,
+                        onClick = onShareFoodClicked,
+                    ) {
+                        Icon(
+                            painter = rememberVectorPainter(Icons.Filled.Map),
+                            contentDescription = "음식 공유",
+                        )
+                    }
+                    IconButton(
+                        onClick = onEditUserAccountInfoClicked,
                     ) {
                         Icon(
                             painter = rememberVectorPainter(Icons.Filled.Person),
@@ -148,14 +159,17 @@ private fun FridgeMainScreenPreview() {
 }
 
 @Composable
-private fun FoodList(
+fun FoodList(
     models: List<Food>,
+    isMyFood: Boolean = true,
     onItemClick: (Int) -> Unit = {},
     onFoodPropertyChanged: (Int, String?, Long?, String?, Boolean?) -> Unit =
         { _, _, _, _, _ -> },
     onEditFoodClicked: (Int) -> Unit = {},
     onDeleteFoodClicked: (Int) -> Unit = {},
 ) {
+    val thumbnailUrls = MutableList<String?>(models.size) { null }.toMutableStateList()
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -168,6 +182,8 @@ private fun FoodList(
         ) { index, item ->
             FoodItemCard(
                 food = item,
+                thumbnailUrl = thumbnailUrls[index],
+                isMyFood = isMyFood,
                 onClick = {
                     onItemClick(index)
                 },
@@ -181,6 +197,9 @@ private fun FoodList(
                 },
                 onDeleteFoodClicked = {
                     onDeleteFoodClicked(index)
+                },
+                onFoodThumbnailUrlLoaded = {
+                    thumbnailUrls[index] = it
                 },
             )
         }
@@ -201,23 +220,39 @@ private fun FoodListPreview() {
 @Composable
 private fun FoodItemCard(
     food: Food,
+    thumbnailUrl: String? = null,
     isMyFood: Boolean = true,
     onClick: () -> Unit = {},
     onFoodPropertyChanged: (Boolean) -> Unit = {},
     onEditFoodClicked: () -> Unit = {},
     onDeleteFoodClicked: () -> Unit = {},
+    onFoodThumbnailUrlLoaded: (String) -> Unit = {},
 ) {
+    val thumbnail by remember { mutableStateOf(thumbnailUrl) }.apply {
+        value = thumbnailUrl
+    }
+
     MyElevatedCard(
         modifier = Modifier
             .clickable(onClick = onClick)
             .fillMaxWidth()
             .wrapContentHeight(),
     ) {
+        val context = LocalContext.current
+
         // 내 음식이어서 삭제, 수정 등 부분이 보여야 하는지 여부
         val isEditorVisible by remember { mutableStateOf(isMyFood) }
         var foodPublicChecked by remember {
             mutableStateOf(food.isPublic)
         }.apply { value = food.isPublic }
+
+        if (thumbnail == null) {
+            LaunchedEffect(context) {
+                withContext(Dispatchers.IO) {
+                    Food.getNaverImageUrl(food.name)?.let { onFoodThumbnailUrlLoaded(it) }
+                }
+            }
+        }
 
         Row(
             modifier = Modifier
@@ -225,27 +260,25 @@ private fun FoodItemCard(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val context = LocalContext.current
-            var model by remember { mutableStateOf<ImageRequest?>(null) }
 
-            LaunchedEffect(context, food.name) {
-                withContext(Dispatchers.IO) {
-                    model = food.getImageModel(context)
-                }
-            }
             Box(
                 modifier = Modifier
                     .width(48.dp)
                     .height(48.dp),
             ) {
-                if (model == null) {
+                if (thumbnail == null) {
                     Image(
                         Icons.Outlined.SyncProblem, "",
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
                     AsyncImage(
-                        model = model,
+                        model = ImageRequest.Builder(context)
+                            .data(thumbnail)
+                            .crossfade(true)
+                            .diskCacheKey("food_${food.name}")
+                            .memoryCacheKey("food_${food.name}")
+                            .build(),
                         contentDescription = food.name,
                         contentScale = ContentScale.Crop,
                         placeholder = rememberVectorPainter(Icons.Outlined.SyncProblem),

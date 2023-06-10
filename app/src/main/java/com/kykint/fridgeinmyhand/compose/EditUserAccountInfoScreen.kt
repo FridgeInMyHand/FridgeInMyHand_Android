@@ -23,17 +23,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.kykint.fridgeinmyhand.ui.theme.FridgeInMyHandTheme
-import com.kykint.fridgeinmyhand.viewmodel.DummyEditUserInfoViewModel
-import com.kykint.fridgeinmyhand.viewmodel.IEditUserInfoViewModel
-import com.kykint.fridgeinmyhand.viewmodel.IEditUserInfoViewModel.EditingState
-import com.kykint.fridgeinmyhand.viewmodel.IEditUserInfoViewModel.UiState
+import com.kykint.fridgeinmyhand.viewmodel.DummyEditUserAccountInfoViewModel
+import com.kykint.fridgeinmyhand.viewmodel.IEditUserAccountInfoViewModel
+import com.kykint.fridgeinmyhand.viewmodel.IEditUserAccountInfoViewModel.EditingState
+import com.kykint.fridgeinmyhand.viewmodel.IEditUserAccountInfoViewModel.UiState
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditUserInfoScreen(
-    viewModel: IEditUserInfoViewModel,
+fun EditUserAccountInfoScreen(
+    viewModel: IEditUserAccountInfoViewModel,
     onLocationChooseClicked: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -88,9 +88,9 @@ fun EditUserInfoScreen(
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun EditUserInfoScreenPreview() {
+private fun EditUserAccountInfoScreenPreview() {
     FridgeInMyHandTheme {
-        EditUserInfoScreen(viewModel = DummyEditUserInfoViewModel())
+        EditUserAccountInfoScreen(viewModel = DummyEditUserAccountInfoViewModel())
     }
 }
 

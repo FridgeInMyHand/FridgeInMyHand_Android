@@ -2,44 +2,42 @@ package com.kykint.fridgeinmyhand.repository
 
 import androidx.annotation.WorkerThread
 import com.kykint.fridgeinmyhand.api.FridgeApi
-import com.kykint.fridgeinmyhand.data.UserInfo
+import com.kykint.fridgeinmyhand.data.UserAccountInfo
 import com.naver.maps.geometry.LatLng
 
-interface IUserInfoRepository {
+interface IUserAccountInfoRepository {
 
     @WorkerThread
-    suspend fun fetchUserInfo(onSuccess: (UserInfo) -> Unit = {}, onFailure: () -> Unit = {})
+    suspend fun fetchUserAccountInfo(uuid: String, onFailure: () -> Unit = {}): UserAccountInfo?
 
     @WorkerThread
-    suspend fun saveUserLocation(latLng: LatLng, onSuccess: () -> Unit, onFailure: () -> Unit)
+    suspend fun saveMyLocation(latLng: LatLng, onSuccess: () -> Unit, onFailure: () -> Unit)
 
     @WorkerThread
-    suspend fun saveUserKakaoTalkLink(url: String, onSuccess: () -> Unit, onFailure: () -> Unit)
+    suspend fun saveMyKakaoTalkLink(url: String, onSuccess: () -> Unit, onFailure: () -> Unit)
 }
 
-class UserInfoRepository : IUserInfoRepository {
+class UserAccountInfoRepository : IUserAccountInfoRepository {
 
     /**
      * 사용자 정보 가져오기
      */
     @WorkerThread
-    override suspend fun fetchUserInfo(
-        onSuccess: (UserInfo) -> Unit,
+    override suspend fun fetchUserAccountInfo(
+        uuid: String,
         onFailure: () -> Unit,
-    ) {
-        FridgeApi.getUserInfo(
-            onSuccess = {
-                onSuccess(UserInfo(it.lat, it.long, it.url))
-            },
+    ): UserAccountInfo? {
+        return FridgeApi.getUserAccountInfo(
+            uuid,
             onFailure = onFailure,
-        )
+        )?.let { UserAccountInfo(it.lat, it.long, it.url) }
     }
 
     /**
      * 사용자 위치 정보 저장
      */
     @WorkerThread
-    override suspend fun saveUserLocation(
+    override suspend fun saveMyLocation(
         latLng: LatLng,
         onSuccess: () -> Unit,
         onFailure: () -> Unit,
@@ -55,7 +53,7 @@ class UserInfoRepository : IUserInfoRepository {
      * 사용자 카카오톡 오픈채팅 링크 저장
      */
     @WorkerThread
-    override suspend fun saveUserKakaoTalkLink(
+    override suspend fun saveMyKakaoTalkLink(
         url: String,
         onSuccess: () -> Unit,
         onFailure: () -> Unit,

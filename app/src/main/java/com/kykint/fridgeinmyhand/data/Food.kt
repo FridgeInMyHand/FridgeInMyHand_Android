@@ -46,7 +46,7 @@ data class Food(
      */
     companion object {
         @WorkerThread
-        private fun getNaverImageUrl(foodName: String): String? {
+        fun getNaverImageUrl(foodName: String): String? {
             try {
                 //#content > div:nth-child(2) > ul > li:nth-child(2) > div.thumb_area > div.thumb.id1721752 > a > img
                 val url = "https://terms.naver.com/search.naver?query=" +

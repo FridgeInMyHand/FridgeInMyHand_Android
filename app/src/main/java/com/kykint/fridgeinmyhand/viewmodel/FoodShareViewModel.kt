@@ -133,10 +133,10 @@ class FoodShareViewModel(
 
             if (fetchedFoods != null && fetchedUserInfo != null) {
                 if (isMainThread) {
-                    _nearbyUserFoods.value = fetchedFoods
+                    _nearbyUserFoods.value = fetchedFoods!!
                     _nearbyUserUrl.value = fetchedUserInfo.url
                 } else {
-                    _nearbyUserFoods.postValue(fetchedFoods)
+                    _nearbyUserFoods.postValue(fetchedFoods!!)
                     _nearbyUserUrl.postValue(fetchedUserInfo.url)
                 }
                 _nearbyUserInfoState.value = NearbyUserInfoState.Normal

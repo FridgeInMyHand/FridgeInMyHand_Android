@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.holix.android.bottomsheetdialog.compose.BottomSheetBehaviorProperties
 import com.holix.android.bottomsheetdialog.compose.BottomSheetDialog
 import com.holix.android.bottomsheetdialog.compose.BottomSheetDialogProperties
 import com.kykint.fridgeinmyhand.compose.FoodList
@@ -113,95 +116,114 @@ class FoodShareActivity : ComponentActivity() {
             }
 
             FridgeInMyHandTheme {
-                var showUserFoodList by remember { mutableStateOf(false) }
-                if (showUserFoodList) {
-                    BottomSheetDialog(
-                        onDismissRequest = { showUserFoodList = false },
-                        properties = BottomSheetDialogProperties(
-                            dismissWithAnimation = true,
-                        ),
+                BoxWithConstraints()
+                {
+                    // BottomSheetDialog를 Half Expanded 상태 없이 사용하기 위해
+                    // 여기서 미리 크기를 정한 후 Peek Height와 Content의 Max Height을 동일하게 설정
+                    val bottomSheetDialogHeight = maxHeight * 0.75f
 
-                        ) {
-                        Surface(
-                            modifier = Modifier.clip(
-                                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                            )
-                        ) {
-                            if (nearbyUserInfoState == NearbyUserInfoState.Loading) {
-                                CircularProgressIndicator()
-                            } else {
-                                Column() {
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Box(
-                                        modifier = Modifier.weight(1f),
-                                    ) {
-                                        FoodList(
-                                            models = nearbyUserFoods ?: emptyList(),
-                                            isMyFood = false,
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(8.dp),
-                                    ) {
-                                        val context = LocalContext.current
-                                        ElevatedButton(
-                                            onClick = {
-                                                nearbyUserUrl.let {
-                                                    if (it != null) {
-                                                        openChat(it)
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "오픈채팅 링크를 등록하지 않은 사용자입니다.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            },
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color(0xFFFAE100),
-                                                contentColor = Color.Black,
-                                            ),
-                                            shape = RoundedCornerShape(4.dp),
-                                            modifier = Modifier.fillMaxWidth(),
+                    var showUserFoodList by remember { mutableStateOf(false) }
+                    if (showUserFoodList) {
+                        BottomSheetDialog(
+                            onDismissRequest = { showUserFoodList = false },
+                            properties = BottomSheetDialogProperties(
+                                dismissWithAnimation = true,
+                                behaviorProperties = BottomSheetBehaviorProperties(
+                                    peekHeight = BottomSheetBehaviorProperties.PeekHeight(
+                                        with(LocalDensity.current) {
+                                            bottomSheetDialogHeight.toPx().toInt()
+                                        }
+                                    ),
+                                ),
+                            ),
+
+                            ) {
+                            Surface(
+                                modifier = Modifier
+                                    .height(bottomSheetDialogHeight)
+                                    .clip(
+                                        shape = RoundedCornerShape(
+                                            topStart = 16.dp,
+                                            topEnd = 16.dp
+                                        ),
+                                    )
+                            ) {
+                                if (nearbyUserInfoState == NearbyUserInfoState.Loading) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    Column() {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Box(
+                                            modifier = Modifier.weight(1f),
                                         ) {
-                                            Text("오픈채팅 열기")
+                                            FoodList(
+                                                models = nearbyUserFoods ?: emptyList(),
+                                                isMyFood = false,
+                                            )
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(8.dp),
+                                        ) {
+                                            val context = LocalContext.current
+                                            ElevatedButton(
+                                                onClick = {
+                                                    nearbyUserUrl.let {
+                                                        if (it != null) {
+                                                            openChat(it)
+                                                        } else {
+                                                            Toast.makeText(
+                                                                context,
+                                                                "오픈채팅 링크를 등록하지 않은 사용자입니다.",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFFFAE100),
+                                                    contentColor = Color.Black,
+                                                ),
+                                                shape = RoundedCornerShape(4.dp),
+                                                modifier = Modifier.fillMaxWidth(),
+                                            ) {
+                                                Text("오픈채팅 열기")
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                Column() {
-                    Box(
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        NaverMap(
-                            locationSource = rememberFusedLocationSource(),
-                            properties = mapProperties,
-                            uiSettings = mapUiSettings,
-                            onMapClick = { pointF: PointF, latLng: LatLng ->
-                                // selectedLocation = latLng
-                            },
-                            cameraPositionState = cameraPositionState,
+                    Column() {
+                        Box(
+                            modifier = Modifier.weight(1f),
                         ) {
-                            nearbyUsers?.map { nearbyUser ->
-                                Marker(
-                                    state = MarkerState(
-                                        position = LatLng(nearbyUser.lat, nearbyUser.lng),
-                                    ),
-                                    width = 36.dp,
-                                    height = 48.dp,
-                                    onClick = {
-                                        viewModel.fetchNearbyUserInfo(nearbyUser.uuid)
-                                        showUserFoodList = true
-                                        true
-                                    },
-                                )
+                            NaverMap(
+                                locationSource = rememberFusedLocationSource(),
+                                properties = mapProperties,
+                                uiSettings = mapUiSettings,
+                                onMapClick = { pointF: PointF, latLng: LatLng ->
+                                    // selectedLocation = latLng
+                                },
+                                cameraPositionState = cameraPositionState,
+                            ) {
+                                nearbyUsers?.map { nearbyUser ->
+                                    Marker(
+                                        state = MarkerState(
+                                            position = LatLng(nearbyUser.lat, nearbyUser.lng),
+                                        ),
+                                        width = 36.dp,
+                                        height = 48.dp,
+                                        onClick = {
+                                            viewModel.fetchNearbyUserInfo(nearbyUser.uuid)
+                                            showUserFoodList = true
+                                            true
+                                        },
+                                    )
+                                }
                             }
                         }
                     }

@@ -47,6 +47,8 @@ import com.kykint.fridgeinmyhand.ui.theme.FridgeInMyHandTheme
 import com.kykint.fridgeinmyhand.utils.epochSecondsToSimpleDate
 import com.kykint.fridgeinmyhand.viewmodel.DummyFridgeMainViewModel
 import com.kykint.fridgeinmyhand.viewmodel.IFridgeMainViewModel
+import com.kykint.fridgeinmyhand.viewmodel.IFridgeMainViewModel.EditingState
+import com.kykint.fridgeinmyhand.viewmodel.IFridgeMainViewModel.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -70,15 +72,23 @@ fun FridgeMainScreen(
     val uiState by viewModel.uiState.collectAsState()
     val editingState by viewModel.editingState.collectAsState()
 
-    if (uiState is IFridgeMainViewModel.UiState.Loading) {
-        ServerWaitingDialog()
+    if (uiState is UiState.Loading) {
+        ServerWaitingDialog(
+            onDismissRequest = {
+                viewModel.cancelRefresh()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+            )
+        )
     }
 
-    if (editingState is IFridgeMainViewModel.EditingState.Editing) {
+    if (editingState is EditingState.Editing) {
         viewModel.foods.value?.let {
             EditFoodDialog(
                 it,
-                (editingState as IFridgeMainViewModel.EditingState.Editing).foodIndex,
+                (editingState as EditingState.Editing).foodIndex,
                 onEditFoodDoneClicked,
                 onEditFoodCancelClicked,
             )
@@ -120,29 +130,38 @@ fun FridgeMainScreen(
         Box(
             modifier = Modifier.padding(contentPadding),
         ) {
-            Column {
-                // val foods = viewModel.foods.observeAsState().value ?: emptyList()
-                val foods = viewModel.foods.observeAsState()
-                val clicked = viewModel.onItemClickEvent.observeAsState().value
-
+            if (uiState == UiState.Failure) {
                 Box(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    FoodList(
-                        models = foods.value ?: emptyList(),
-                        onItemClick = onItemClick,
-                        onFoodPropertyChanged = onFoodPropertyChanged,
-                        onEditFoodClicked = onEditFoodClicked,
-                        onDeleteFoodClicked = onDeleteFoodClicked,
-                    )
+                    Text("로딩에 실패하였습니다.")
                 }
+            } else {
+                Column {
+                    // val foods = viewModel.foods.observeAsState().value ?: emptyList()
+                    val foods = viewModel.foods.observeAsState()
+                    val clicked = viewModel.onItemClickEvent.observeAsState().value
 
-                clicked?.let {
-                    it.getContentIfNotHandled()?.let {
-                        ComposableToast(it.name)
+                    Box(
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        FoodList(
+                            models = foods.value ?: emptyList(),
+                            onItemClick = onItemClick,
+                            onFoodPropertyChanged = onFoodPropertyChanged,
+                            onEditFoodClicked = onEditFoodClicked,
+                            onDeleteFoodClicked = onDeleteFoodClicked,
+                        )
                     }
+
+                    clicked?.let {
+                        it.getContentIfNotHandled()?.let {
+                            ComposableToast(it.name)
+                        }
+                    }
+                    // Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {Greeting("Android")}
                 }
-                // Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {Greeting("Android")}
             }
         }
     }
@@ -371,8 +390,17 @@ private fun FoodItemCardPreview() {
 }
 
 @Composable
-private fun ServerWaitingDialog() {
-    ProgressDialog {
+private fun ServerWaitingDialog(
+    onDismissRequest: () -> Unit = {},
+    properties: DialogProperties = DialogProperties(
+        dismissOnBackPress = false,
+        dismissOnClickOutside = false
+    ),
+) {
+    ProgressDialog(
+        onDismissRequest = onDismissRequest,
+        properties = properties,
+    ) {
         Text("Fetching food list from server...")
     }
 }

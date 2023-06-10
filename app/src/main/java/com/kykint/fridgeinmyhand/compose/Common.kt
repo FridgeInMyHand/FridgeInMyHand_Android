@@ -77,10 +77,17 @@ fun MyElevatedCardPreview() {
 }
 
 @Composable
-fun ProgressDialog(content: @Composable (RowScope.() -> Unit)? = null) {
+fun ProgressDialog(
+    onDismissRequest: () -> Unit = {},
+    properties: DialogProperties = DialogProperties(
+        dismissOnBackPress = false,
+        dismissOnClickOutside = false
+    ),
+    content: @Composable (RowScope.() -> Unit)? = null,
+) {
     Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        onDismissRequest = onDismissRequest,
+        properties = properties,
     ) {
         Surface(
             modifier = Modifier.wrapContentSize(),

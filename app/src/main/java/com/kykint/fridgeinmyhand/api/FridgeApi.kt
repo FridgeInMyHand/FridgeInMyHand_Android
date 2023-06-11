@@ -76,9 +76,9 @@ interface FridgeApiService {
 }
 
 object FridgeApiClient {
-    private var baseurl = Prefs.serverApiAddress
+    private var baseUrl = Prefs.serverApiAddress
     private val builder = Retrofit.Builder()
-        .baseUrl(baseurl)
+        .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
 
     lateinit var service: FridgeApiService
@@ -86,7 +86,8 @@ object FridgeApiClient {
     private val prefChangeListener =
         SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
             if (key == Prefs.Key.serverApiAddress) {
-                baseurl = Prefs.serverApiAddress
+                baseUrl = Prefs.serverApiAddress
+                builder.baseUrl(baseUrl)
                 createService()
             }
         }

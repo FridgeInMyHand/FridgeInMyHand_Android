@@ -2,7 +2,6 @@ package com.kykint.fridgeinmyhand.api
 
 import android.content.SharedPreferences
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.WorkerThread
 import com.kykint.fridgeinmyhand.App
@@ -34,24 +33,23 @@ interface AiApiService {
 }
 
 object AiApiClient {
-    private var baseurl = Prefs.aiApiAddress
+    private var baseUrl = Prefs.aiApiAddress
     private val builder = Retrofit.Builder()
-        .baseUrl(baseurl)
+        .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
 
     lateinit var service: AiApiService
 
     private val prefChangeListener =
         SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-            Log.e("AiApi", "listener triggered")
             if (key == Prefs.Key.aiApiAddress) {
-                baseurl = Prefs.aiApiAddress
+                baseUrl = Prefs.aiApiAddress
+                builder.baseUrl(baseUrl)
                 createService()
             }
         }
 
     init {
-        Log.e("AiApi", "init")
         createService()
 
         Prefs.registerPrefChangeListener(prefChangeListener)

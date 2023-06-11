@@ -112,6 +112,7 @@ class FridgeMainViewModel(
     }
 
     override fun refreshFoods() {
+        refreshJob?.cancel()
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
             repository.fetchMyFoodList(

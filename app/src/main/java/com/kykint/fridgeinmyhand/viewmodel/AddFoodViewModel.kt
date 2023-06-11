@@ -1,11 +1,13 @@
 package com.kykint.fridgeinmyhand.viewmodel
 
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.kykint.fridgeinmyhand.App
 import com.kykint.fridgeinmyhand.data.Food
 import com.kykint.fridgeinmyhand.repository.AddFoodRepositoryImpl
 import com.kykint.fridgeinmyhand.repository.FoodListRepositoryImpl
@@ -76,7 +78,20 @@ class AddFoodViewModel(
             repository.getFoodNamesFromImage(
                 path,
                 onSuccess = { names ->
-                    names.map { Food(name = it) }.let { items.addAll(it) }
+                    if (names.isEmpty()) {
+                        Toast.makeText(
+                            App.context,
+                            "감지된 음식이 없습니다! 보다 가까이서 촬영해보세요.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            App.context,
+                            "새 음식을 추가했습니다!\n\"${names.joinToString("\", \"")}\"",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        names.map { Food(name = it) }.let { items.addAll(0, it) }
+                    }
                     _state.value = State.Success
                 },
                 onFailure = {
@@ -109,7 +124,7 @@ class AddFoodViewModel(
     }
 
     override fun changeItemPublic(index: Int, newPublic: Boolean) {
-        items[index].isPublic = newPublic
+        items[index].publicFood = newPublic
     }
 
     override fun addFoodDone(

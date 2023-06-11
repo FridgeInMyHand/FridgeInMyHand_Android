@@ -110,7 +110,10 @@ class EditUserAccountInfoViewModel(
     }
 
     override fun loadInfos() {
-        loadInfosJob?.cancel()
+        if (loadInfosJob?.isActive == true) {
+            return
+        }
+
         loadInfosJob = viewModelScope.launch {
             _uiState.value = UiState.Loading
             repository.fetchUserAccountInfo(Prefs.uuid)?.let { userAccountInfo ->

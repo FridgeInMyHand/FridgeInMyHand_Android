@@ -14,17 +14,17 @@ data class FoodListResponse(
 ) : BaseResponse {
 
     data class Content(
-        @SerializedName("name")
-        val name: String,
+        @SerializedName("foodName")
+        val foodName: String,
 
         @SerializedName("amount")
-        val amount: String?,
+        val amount: String,
 
         @SerializedName("bestBefore")
         val bestBefore: Long?,
 
-        @SerializedName("public")
-        val isPublic: Boolean,
+        @SerializedName("publicFood")
+        val publicFood: Boolean?,
     )
 }
 

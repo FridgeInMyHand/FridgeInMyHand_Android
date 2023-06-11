@@ -2,6 +2,7 @@ package com.kykint.fridgeinmyhand.compose
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -110,6 +111,7 @@ private fun EditableFoodItemListPreview() {
     EditableFoodItemList(items = items, viewModel = DummyAddFoodViewModel())
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun EditableFoodItemList(
@@ -184,7 +186,8 @@ private fun EditableFoodItemPreview() {
         item = Food(
             name = "김치",
             bestBefore = (System.currentTimeMillis() / 1000).toLong()
-        )
+        ),
+        onItemRemoveClicked = {},
     )
 }
 
@@ -197,7 +200,7 @@ fun EditableFoodItem(
     onFoodBestBeforeChanged: (Long) -> Unit = {},
     onFoodAmountChanged: (String) -> Unit = {},
     onFoodPublicChanged: (Boolean) -> Unit = {},
-    onItemRemoveClicked: () -> Unit = {},
+    onItemRemoveClicked: (() -> Unit)? = null,
 ) {
     MyElevatedCard(
         modifier = Modifier
@@ -223,8 +226,8 @@ fun EditableFoodItem(
         var foodAmount by remember { mutableStateOf(item.amount) }.apply {
             value = item.amount
         }
-        var foodPublic by remember { mutableStateOf(item.isPublic) }.apply {
-            value = item.isPublic
+        var foodPublic by remember { mutableStateOf(item.publicFood) }.apply {
+            value = item.publicFood
         }
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -251,26 +254,72 @@ fun EditableFoodItem(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            /**
-             * 음식 이름 입력칸
-             */
-            CustomTextField(
-                value = foodName,
-                onValueChange = {
-                    foodName = it
-                    onFoodNameChanged(it)
-                },
-                placeholder = {
-                    Text(
-                        "이름",
-                        style = MaterialTheme.typography.labelSmall
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                /**
+                 * 음식 이름 입력칸
+                 */
+                CustomTextField(
+                    value = foodName,
+                    onValueChange = {
+                        foodName = it
+                        onFoodNameChanged(it)
+                    },
+                    placeholder = {
+                        Text(
+                            "이름",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(0.7f)
+                        .fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                )
+
+                Spacer(Modifier.width(8.dp))
+
+                /**
+                 * 음식 양 입력 칸
+                 */
+                CustomTextField(
+                    value = foodAmount ?: "",
+                    onValueChange = {
+                        foodAmount = it
+                        onFoodAmountChanged(it)
+                    },
+                    placeholder = {
+                        Text(
+                            "수량",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    modifier = Modifier.weight(0.3f),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                )
+
+                Spacer(Modifier.width(16.dp))
+
+                /**
+                 * 공유 여부 선택
+                 */
+                Text(
+                    "공유",
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                    Checkbox(
+                        checked = foodPublic ?: false,
+                        onCheckedChange = {
+                            foodPublic = it
+                            onFoodPublicChanged(it)
+                        },
+                        modifier = Modifier.scale(0.7f),
                     )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                textStyle = MaterialTheme.typography.bodySmall,
-            )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -312,59 +361,18 @@ fun EditableFoodItem(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                FilledTonalIconButton(
-                    onClick = onItemRemoveClicked,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(32.dp),
-                ) {
-                    Icon(
-                        Icons.Filled.Close, "",
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            /**
-             * 음식 양 입력 칸
-             */
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CustomTextField(
-                    value = foodAmount ?: "",
-                    onValueChange = {
-                        foodAmount = it
-                        onFoodAmountChanged(it)
-                    },
-                    placeholder = {
-                        Text(
-                            "수량",
-                            style = MaterialTheme.typography.labelSmall
+                onItemRemoveClicked?.let {
+                    FilledTonalIconButton(
+                        onClick = it,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(32.dp),
+                    ) {
+                        Icon(
+                            Icons.Filled.Close, "",
+                            modifier = Modifier.size(16.dp),
                         )
-                    },
-                    modifier = Modifier.weight(1f),
-                    textStyle = MaterialTheme.typography.bodySmall,
-                )
-
-                Spacer(Modifier.width(16.dp))
-
-                Text(
-                    "공유",
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                    Checkbox(
-                        checked = foodPublic,
-                        onCheckedChange = {
-                            foodPublic = it
-                            onFoodPublicChanged(it)
-                        },
-                        modifier = Modifier.scale(0.7f),
-                    )
+                    }
                 }
             }
 

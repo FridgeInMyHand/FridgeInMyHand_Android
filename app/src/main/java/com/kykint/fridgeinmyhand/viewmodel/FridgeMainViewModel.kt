@@ -112,7 +112,10 @@ class FridgeMainViewModel(
     }
 
     override fun refreshFoods() {
-        refreshJob?.cancel()
+        if (refreshJob?.isActive == true) {
+            return
+        }
+
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
             repository.fetchMyFoodList(
@@ -175,7 +178,7 @@ class FridgeMainViewModel(
                 editedFood.name,
                 editedFood.bestBefore,
                 editedFood.amount,
-                editedFood.isPublic,
+                editedFood.publicFood,
             )
         }
     }

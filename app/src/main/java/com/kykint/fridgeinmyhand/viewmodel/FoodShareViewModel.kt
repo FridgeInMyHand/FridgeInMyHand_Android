@@ -102,7 +102,10 @@ class FoodShareViewModel(
     override fun refreshNearbyUsers(
         lat: Double, lng: Double, latLimit: Double, lngLimit: Double,
     ) {
-        refreshJob?.cancel()
+        if (refreshJob?.isActive == true) {
+            return
+        }
+
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
             userRepository.getNearbyUsers(
@@ -125,7 +128,10 @@ class FoodShareViewModel(
     override fun fetchNearbyUserInfo(
         uuid: String,
     ) {
-        fetchJob?.cancel()
+        if (fetchJob?.isActive == true) {
+            return
+        }
+
         fetchJob = viewModelScope.launch {
             _nearbyUserInfoState.value = NearbyUserInfoState.Loading
             val fetchedFoods = foodListRepository.fetchFoodList(uuid)

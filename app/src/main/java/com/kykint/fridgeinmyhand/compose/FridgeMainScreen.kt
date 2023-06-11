@@ -229,6 +229,9 @@ fun FoodList(
                 },
             )
         }
+        item {
+            Spacer(modifier = Modifier.height(100.dp))
+        }
     }
 }
 
@@ -269,8 +272,8 @@ private fun FoodItemCard(
         // 내 음식이어서 삭제, 수정 등 부분이 보여야 하는지 여부
         val isEditorVisible by remember { mutableStateOf(isMyFood) }
         var foodPublicChecked by remember {
-            mutableStateOf(food.isPublic)
-        }.apply { value = food.isPublic }
+            mutableStateOf(food.publicFood)
+        }.apply { value = food.publicFood }
 
         LaunchedEffect(thumbnail) {
             if (thumbnail == null) {
@@ -356,7 +359,7 @@ private fun FoodItemCard(
                         style = MaterialTheme.typography.labelSmall,
                     )
                     Checkbox(
-                        checked = foodPublicChecked,
+                        checked = foodPublicChecked ?: false,
                         onCheckedChange = onFoodPropertyChanged,
                         modifier = Modifier.scale(0.7f),
                     )
@@ -441,7 +444,7 @@ private fun EditFoodDialog(
                         onFoodNameChanged = { food.name = it },
                         onFoodBestBeforeChanged = { food.bestBefore = it },
                         onFoodAmountChanged = { food.amount = it },
-                        onFoodPublicChanged = { food.isPublic = it },
+                        onFoodPublicChanged = { food.publicFood = it },
                     )
                     Row(
                         horizontalArrangement = Arrangement.End,
@@ -476,7 +479,7 @@ private fun EditFoodDialogPreview() {
         name = "김치",
         bestBefore = 1000000000L,
         amount = "100g",
-        isPublic = true
+        publicFood = true
     )
     EditFoodDialog(items = listOf(food), foodEditIndex = 0)
 }

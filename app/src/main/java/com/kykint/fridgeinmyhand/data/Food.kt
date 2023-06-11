@@ -18,9 +18,9 @@ data class Food(
      */
     var bestBefore: Long? = null,
 
-    var amount: String? = null,
+    var amount: String = "",
 
-    var isPublic: Boolean = false,
+    var publicFood: Boolean? = false,
 ) {
     @WorkerThread
     fun getImageModel(context: Context): ImageRequest? {
@@ -38,7 +38,7 @@ data class Food(
     }
 
     override fun toString(): String {
-        return "Food(name='$name', bestBefore=$bestBefore, amount=$amount, isPublic=$isPublic)"
+        return "Food(name='$name', bestBefore=$bestBefore, amount=$amount, isPublic=$publicFood)"
     }
 
     /**

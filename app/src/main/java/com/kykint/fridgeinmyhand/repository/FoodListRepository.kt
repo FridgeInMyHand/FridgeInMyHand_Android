@@ -62,7 +62,7 @@ object FoodListRepositoryImpl : IFoodListRepository {
     override suspend fun fetchFoodList(uuid: String, onFailure: () -> Unit): List<Food>? {
         return FridgeApi.getFoodList(uuid, onFailure = onFailure)?.let { response ->
             response.names.map {
-                Food(it.name, it.bestBefore, it.amount, it.isPublic)
+                Food(it.foodName, it.bestBefore, it.amount, it.publicFood)
             }
         }
     }
@@ -75,7 +75,7 @@ object FoodListRepositoryImpl : IFoodListRepository {
         FridgeApi.getMyFoodList(onFailure = onFailure)?.let { response ->
             // TODO: Handle failures
             response.names.map {
-                Food(it.name, it.bestBefore, it.amount, it.isPublic)
+                Food(it.foodName, it.bestBefore, it.amount, it.publicFood)
             }.let {
                 if (isMainThread) {
                     _foods.value = it
@@ -143,7 +143,7 @@ object FoodListRepositoryImpl : IFoodListRepository {
             name = newName ?: oldFood.name,
             bestBefore = newBestBefore ?: oldFood.bestBefore,
             amount = newAmount ?: oldFood.amount,
-            isPublic = newPublic ?: oldFood.isPublic,
+            publicFood = newPublic ?: oldFood.publicFood,
         )
 
         val newList = _foods.value!!.toMutableList()

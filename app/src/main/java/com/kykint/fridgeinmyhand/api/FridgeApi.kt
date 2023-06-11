@@ -13,65 +13,62 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Query
+import retrofit2.http.PUT
 
 interface FridgeApiService {
     /**
      * 음식 목록 받아오기
+     * 내용 형식: application/json
      */
-    @GET("/food")
+    @PUT("/food")
     suspend fun getFood(
-        @Query("RequestUUID") requestUUID: String,
-        @Query("UserUUID") userUUID: String,
+        @Body param: GetFoodRequestModel
     ): Response<FoodListResponse>
 
     /**
      * 음식 목록 서버에 저장
-     * 요청 형식: application/json
+     * 내용 형식: application/json
      */
     @POST("/food")
     fun postFood(
-        @Body param: PostFoodListModel,
+        @Body param: PostFoodRequestModel,
     ): Call<Void>
 
     /**
      * 사용자 정보 받아오기
+     * 내용 형식: application/json
      */
-    @GET("/user")
+    @PUT("/user")
     suspend fun getUser(
-        @Query("UUID") uuid: String,
+        @Body param: GetUserRequestModel,
     ): Response<UserAccountInfoResponse>
 
     /**
      * 사용자 위치 등록
-     * 요청 형식: application/json
+     * 내용 형식: application/json
      */
     @POST("/userLocation")
     fun postUserLocation(
-        @Body param: PostUserLocationModel,
+        @Body param: PostUserLocationRequestModel,
     ): Call<Void>
 
     /**
      * 사용자 카카오톡 링크 등록
-     * 요청 형식: application/json
+     * 내용 형식: application/json
      */
     @POST("/userURL")
     fun postUserUrl(
-        @Body param: PostUserUrlModel,
+        @Body param: PostUserUrlRequestModel,
     ): Call<Void>
 
     /**
      * 근처 사용자 정보 받아오기
+     * 내용 형식: application/json
      */
-    @GET("/nearbyUser")
+    @PUT("/nearbyUser")
     fun getNearbyUser(
-        @Query("UUID") uuid: String,
-        @Query("lat") lat: Double,
-        @Query("long") long: Double,
-        @Query("lat_limit") lat_limit: Double,
-        @Query("long_limit") long_limit: Double,
+        @Body param: GetNearbyUserRequestModel,
     ): Call<NearbyUserResponse>
 }
 
@@ -121,15 +118,21 @@ object FridgeApi {
         onFailure: () -> Unit = {},
     ): FoodListResponse? {
         return try {
-            FridgeApiClient.service.getFood(requestUUID, Prefs.uuid).body() ?: run {
+            val request = GetFoodRequestModel(requestUUID, Prefs.uuid)
+            val response = FridgeApiClient.service.getFood(request)
+
+            Log.e("getFoodList()", "$request\n$response\n${response.body()}")
+            response.body() ?: run {
                 onFailure()
                 null
             }
+
         } catch (e: Exception) {
             Log.e(
-                FridgeApi::class.java.simpleName,
+                "getFoodList()",
                 "Exception: ${e.message}\nStack trace: ${e.stackTrace}"
             )
+            onFailure()
             null
         }
     }
@@ -143,9 +146,10 @@ object FridgeApi {
         onSuccess: () -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
-        val call = FridgeApiClient.service.postFood(
-            PostFoodListModel(Prefs.uuid).fromFoods(foods)
-        )
+        val request = PostFoodRequestModel(Prefs.uuid).fromFoods(foods)
+        Log.e("saveFoodList()", "Saving foods: $request")
+
+        val call = FridgeApiClient.service.postFood(request)
 
         call.enqueue(object : Callback<Void> {
             override fun onResponse(
@@ -155,11 +159,13 @@ object FridgeApi {
                 if (response.isSuccessful) {
                     onSuccess()
                 } else {
+                    Log.e("saveFoodList()", "Got response but error:\n$response")
                     onFailure()
                 }
             }
 
             override fun onFailure(call: Call<Void>, t: Throwable) {
+                Log.e("saveFoodList()", "ERROR:\n$t")
                 onFailure()
             }
         })
@@ -174,15 +180,20 @@ object FridgeApi {
         onFailure: () -> Unit = {},
     ): UserAccountInfoResponse? {
         return try {
-            FridgeApiClient.service.getUser(uuid).body() ?: run {
+            val request = GetUserRequestModel(uuid)
+            val response = FridgeApiClient.service.getUser(request)
+
+            Log.e("getUserAccountInfo()", "$request\n$response\n${response.body()}")
+            response.body() ?: run {
                 onFailure()
                 null
             }
         } catch (e: Exception) {
             Log.e(
-                FridgeApi::class.java.simpleName,
+                "getUserAccountInfo()",
                 "Exception: ${e.message}\nStack trace: ${e.stackTrace}"
             )
+            onFailure()
             null
         }
     }
@@ -197,7 +208,7 @@ object FridgeApi {
         onFailure: () -> Unit = {},
     ) {
         val call = FridgeApiClient.service.postUserLocation(
-            PostUserLocationModel(Prefs.uuid, latLng.latitude, latLng.longitude)
+            PostUserLocationRequestModel(Prefs.uuid, latLng.latitude, latLng.longitude)
         )
 
         call.enqueue(object : Callback<Void> {
@@ -228,7 +239,7 @@ object FridgeApi {
         onFailure: () -> Unit = {},
     ) {
         val call = FridgeApiClient.service.postUserUrl(
-            PostUserUrlModel(Prefs.uuid, url)
+            PostUserUrlRequestModel(Prefs.uuid, url)
         )
 
         call.enqueue(object : Callback<Void> {
@@ -259,7 +270,7 @@ object FridgeApi {
         onFailure: () -> Unit = {},
     ) {
         val call = FridgeApiClient.service.getNearbyUser(
-            Prefs.uuid, lat, long, lat_limit, long_limit
+            GetNearbyUserRequestModel(Prefs.uuid, lat, long, lat_limit, long_limit)
         )
 
         call.enqueue(object : Callback<NearbyUserResponse> {

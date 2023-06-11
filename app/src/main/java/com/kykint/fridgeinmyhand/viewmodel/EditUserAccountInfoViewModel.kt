@@ -11,6 +11,7 @@ import com.kykint.fridgeinmyhand.repository.UserAccountInfoRepository
 import com.kykint.fridgeinmyhand.utils.Prefs
 import com.naver.maps.geometry.LatLng
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,7 @@ abstract class IEditUserAccountInfoViewModel : ViewModel() {
     abstract val kakaoTalkLink: LiveData<String>
 
     abstract fun loadInfos()
+    abstract fun cancelLoadInfos()
     abstract fun onEditUserLocationDone(newLoc: LatLng)
     abstract fun editUserKakaoTalkLink()
     abstract fun onEditUserKakaoTalkLinkDone(newLink: String)
@@ -79,8 +81,11 @@ class EditUserAccountInfoViewModel(
     override val kakaoTalkLink: LiveData<String>
         get() = _kakaoTalkLink
 
+    private var loadInfosJob: Job? = null
+
     override fun loadInfos() {
-        viewModelScope.launch {
+        loadInfosJob?.cancel()
+        loadInfosJob = viewModelScope.launch {
             _uiState.value = UiState.Loading
             repository.fetchUserAccountInfo(Prefs.uuid)?.let { userAccountInfo ->
                 if (userAccountInfo.lat != null && userAccountInfo.long != null) {
@@ -91,11 +96,18 @@ class EditUserAccountInfoViewModel(
                 }
                 userAccountInfo.url?.let { _kakaoTalkLink.value = it }
 
+                loadInfosJob = null
                 _uiState.value = UiState.Normal
             } ?: run {
-                _uiState.value = UiState.Failure
+                cancelLoadInfos()
             }
         }
+    }
+
+    override fun cancelLoadInfos() {
+        loadInfosJob?.cancel()
+        loadInfosJob = null
+        _uiState.value = UiState.Failure
     }
 
     override fun onEditUserLocationDone(newLatLng: LatLng) {
@@ -148,6 +160,7 @@ class DummyEditUserAccountInfoViewModel : IEditUserAccountInfoViewModel() {
     override val kakaoTalkLink: LiveData<String> = MutableLiveData()
 
     override fun loadInfos() {}
+    override fun cancelLoadInfos() {}
     override fun onEditUserLocationDone(newLoc: LatLng) {}
     override fun editUserKakaoTalkLink() {}
     override fun onEditUserKakaoTalkLinkDone(newLink: String) {}

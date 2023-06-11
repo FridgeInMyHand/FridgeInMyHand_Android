@@ -43,7 +43,15 @@ fun EditUserAccountInfoScreen(
     val kakaoTalkLink by viewModel.kakaoTalkLink.observeAsState()
 
     if (uiState is UiState.Loading) {
-        ServerWaitingDialog()
+        ServerWaitingDialog(
+            onDismissRequest = {
+                viewModel.cancelLoadInfos()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+            ),
+        )
     }
 
     if (editingState is EditingState.EditingKakaoTalkLink) {
@@ -70,15 +78,22 @@ fun EditUserAccountInfoScreen(
                     title = { Text("사용자 위치") },
                     subtitle = {
                         Text(userLocation?.let { "위도: ${it.latitude}\n경도: ${it.longitude}" }
-                            ?: "위치 정보 없음")
+                            ?: (if (uiState == UiState.Normal) "위치 정보 없음" else "정보를 불러오지 못했습니다."))
                     },
                     onClick = onLocationChooseClicked,
+                    enabled = uiState == UiState.Normal,
                 )
                 SettingsMenuLink(
                     icon = { Icon(imageVector = Icons.Filled.Message, "KakaoTalk Link") },
                     title = { Text("카카오톡 오픈채팅 링크") },
-                    subtitle = { Text(kakaoTalkLink ?: "링크 정보 없음") },
+                    subtitle = {
+                        Text(
+                            kakaoTalkLink
+                                ?: (if (uiState == UiState.Normal) "링크 정보 없음" else "정보를 불러오지 못했습니다.")
+                        )
+                    },
                     onClick = viewModel::editUserKakaoTalkLink,
+                    enabled = uiState == UiState.Normal,
                 )
             }
         }
@@ -95,8 +110,17 @@ private fun EditUserAccountInfoScreenPreview() {
 }
 
 @Composable
-private fun ServerWaitingDialog() {
-    ProgressDialog {
+private fun ServerWaitingDialog(
+    onDismissRequest: () -> Unit = {},
+    properties: DialogProperties = DialogProperties(
+        dismissOnBackPress = false,
+        dismissOnClickOutside = false
+    ),
+) {
+    ProgressDialog(
+        onDismissRequest = onDismissRequest,
+        properties = properties,
+    ) {
         Text("Fetching info from server...")
     }
 }

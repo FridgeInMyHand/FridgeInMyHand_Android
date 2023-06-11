@@ -24,6 +24,14 @@ object Prefs {
             }
         }
 
+    var serverApiAddress: String
+        get() = pref.getString(Key.serverApiAddress, "http://kykint.com:3939")!!
+        set(value) = editor.putString(Key.serverApiAddress, value).apply()
+
+    var aiApiAddress: String
+        get() = pref.getString(Key.aiApiAddress, "http://kykint.com:3939")!!
+        set(value) = editor.putString(Key.aiApiAddress, value).apply()
+
 
     fun registerPrefChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         pref.registerOnSharedPreferenceChangeListener(listener)
@@ -35,5 +43,7 @@ object Prefs {
 
     object Key {
         val UUID = "uuid"
+        val serverApiAddress = "serverApiAddress"
+        val aiApiAddress = "aiApiAddress"
     }
 }

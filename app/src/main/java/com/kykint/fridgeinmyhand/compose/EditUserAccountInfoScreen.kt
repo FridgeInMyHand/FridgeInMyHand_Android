@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,6 +24,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.kykint.fridgeinmyhand.ui.theme.FridgeInMyHandTheme
+import com.kykint.fridgeinmyhand.utils.Prefs
 import com.kykint.fridgeinmyhand.viewmodel.DummyEditUserAccountInfoViewModel
 import com.kykint.fridgeinmyhand.viewmodel.IEditUserAccountInfoViewModel
 import com.kykint.fridgeinmyhand.viewmodel.IEditUserAccountInfoViewModel.EditingState
@@ -41,9 +43,19 @@ fun EditUserAccountInfoScreen(
 
     val userLocation by viewModel.userLocation.observeAsState()
     val kakaoTalkLink by viewModel.kakaoTalkLink.observeAsState()
+    val serverApiAddress by viewModel.serverApiAddress.observeAsState()
+    val aiApiAddress by viewModel.aiApiAddress.observeAsState()
 
     if (uiState is UiState.Loading) {
-        ServerWaitingDialog()
+        ServerWaitingDialog(
+            onDismissRequest = {
+                viewModel.cancelLoadInfos()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+            ),
+        )
     }
 
     if (editingState is EditingState.EditingKakaoTalkLink) {
@@ -51,8 +63,13 @@ fun EditUserAccountInfoScreen(
             kakaoTalkLink ?: "",
             onEditDone = viewModel::onEditUserKakaoTalkLinkDone,
         )
+    } else if (editingState is EditingState.EditingApiAddress) {
+        EditApiAddress(
+            serverApiAddress ?: Prefs.serverApiAddress,
+            aiApiAddress ?: Prefs.aiApiAddress,
+            viewModel::onEditApiAddressDone,
+        )
     }
-
 
     Scaffold(
         topBar = {
@@ -70,15 +87,28 @@ fun EditUserAccountInfoScreen(
                     title = { Text("사용자 위치") },
                     subtitle = {
                         Text(userLocation?.let { "위도: ${it.latitude}\n경도: ${it.longitude}" }
-                            ?: "위치 정보 없음")
+                            ?: (if (uiState == UiState.Normal) "위치 정보 없음" else "정보를 불러오지 못했습니다."))
                     },
                     onClick = onLocationChooseClicked,
+                    enabled = uiState == UiState.Normal,
                 )
                 SettingsMenuLink(
                     icon = { Icon(imageVector = Icons.Filled.Message, "KakaoTalk Link") },
                     title = { Text("카카오톡 오픈채팅 링크") },
-                    subtitle = { Text(kakaoTalkLink ?: "링크 정보 없음") },
+                    subtitle = {
+                        Text(
+                            kakaoTalkLink
+                                ?: (if (uiState == UiState.Normal) "링크 정보 없음" else "정보를 불러오지 못했습니다.")
+                        )
+                    },
                     onClick = viewModel::editUserKakaoTalkLink,
+                    enabled = uiState == UiState.Normal,
+                )
+                SettingsMenuLink(
+                    icon = { Icon(imageVector = Icons.Filled.Settings, "API Address") },
+                    title = { Text("API 주소") },
+                    subtitle = { Text("${serverApiAddress}\n${aiApiAddress}") },
+                    onClick = viewModel::editApiAddress,
                 )
             }
         }
@@ -95,8 +125,17 @@ private fun EditUserAccountInfoScreenPreview() {
 }
 
 @Composable
-private fun ServerWaitingDialog() {
-    ProgressDialog {
+private fun ServerWaitingDialog(
+    onDismissRequest: () -> Unit = {},
+    properties: DialogProperties = DialogProperties(
+        dismissOnBackPress = false,
+        dismissOnClickOutside = false
+    ),
+) {
+    ProgressDialog(
+        onDismissRequest = onDismissRequest,
+        properties = properties,
+    ) {
         Text("Fetching info from server...")
     }
 }
@@ -151,4 +190,64 @@ private fun EditUserKakaoTalkLink(
 private fun EditUserKakaoTalkLinkPreview() {
     val link = "https://kakaotalk.com"
     EditUserKakaoTalkLink(link)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun EditApiAddress(
+    serverApiAddress: String,
+    aiApiAddress: String,
+    onEditDone: (String, String) -> Unit = { _, _ -> },
+) {
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
+    ) {
+        var newServerApiAddress by remember { mutableStateOf(serverApiAddress) }
+        var newAiApiAddress by remember { mutableStateOf(aiApiAddress) }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+            ) {
+                Text("서버 API")
+                CustomTextField(
+                    value = newServerApiAddress,
+                    onValueChange = { newServerApiAddress = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text("AI API")
+                CustomTextField(
+                    value = newAiApiAddress,
+                    onValueChange = { newAiApiAddress = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { onEditDone(newServerApiAddress, newAiApiAddress) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Save")
+                }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview
+@Composable
+private fun EditApiAddressPreview() {
+    val serverApi = "https://api.kykint.com"
+    val aiApi = "https://api.kykint.com"
+    EditApiAddress(serverApi, aiApi)
 }

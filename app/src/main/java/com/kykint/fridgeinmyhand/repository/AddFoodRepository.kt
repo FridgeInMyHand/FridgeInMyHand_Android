@@ -2,7 +2,7 @@ package com.kykint.fridgeinmyhand.repository
 
 import android.graphics.Bitmap
 import androidx.annotation.WorkerThread
-import com.kykint.fridgeinmyhand.api.FridgeApi
+import com.kykint.fridgeinmyhand.api.AiApi
 
 interface IAddFoodRepository {
     @WorkerThread
@@ -30,7 +30,7 @@ class AddFoodRepositoryImpl : IAddFoodRepository {
         onSuccess: (List<String>) -> Unit,
         onFailure: () -> Unit,
     ) {
-        FridgeApi.getFoodLabels(bitmap, onSuccess, onFailure)
+        AiApi.getFoodLabels(bitmap, onSuccess, onFailure)
     }
 
     @WorkerThread
@@ -39,6 +39,6 @@ class AddFoodRepositoryImpl : IAddFoodRepository {
         onSuccess: (List<String>) -> Unit,
         onFailure: () -> Unit,
     ) {
-        FridgeApi.getFoodLabels(filePath, onSuccess, onFailure)
+        AiApi.getFoodLabels(filePath, onSuccess, onFailure)
     }
 }

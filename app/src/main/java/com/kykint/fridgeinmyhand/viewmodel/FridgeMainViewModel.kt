@@ -11,6 +11,7 @@ import com.kykint.fridgeinmyhand.repository.FoodListRepositoryImpl
 import com.kykint.fridgeinmyhand.repository.IFoodListRepository
 import com.kykint.fridgeinmyhand.utils.Event
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +56,7 @@ abstract class IFridgeMainViewModel : ViewModel() {
     abstract val onItemClickEvent: MutableLiveData<Event<Food>>
 
     abstract fun refreshFoods()
+    abstract fun cancelRefresh()
     abstract fun onItemClick(position: Int)
     abstract fun onBtnClick()
     abstract fun updateFoodProperty(
@@ -92,6 +94,8 @@ class FridgeMainViewModel(
         }
     }
 
+    private var refreshJob: Job? = null
+
     // private val _foods: MutableLiveData<List<MyModel>> = MutableLiveData()
     // override val foods: LiveData<List<MyModel>> = _myModels
     override var foods = FoodListRepositoryImpl.foods
@@ -100,15 +104,24 @@ class FridgeMainViewModel(
     // override val onItemClickEvent: MutableLiveData<MyModel> = MutableLiveData()
     override val onItemClickEvent: MutableLiveData<Event<Food>> = MutableLiveData()
 
+    override fun cancelRefresh() {
+        refreshJob?.cancel()
+        refreshJob = null
+
+        _uiState.value = UiState.Failure
+    }
+
     override fun refreshFoods() {
-        viewModelScope.launch(Dispatchers.IO) {
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Loading
             repository.fetchMyFoodList(
                 onSuccess = {
                     _uiState.value = UiState.Success
+                    refreshJob = null
                 },
                 onFailure = {
-                    _uiState.value = UiState.Failure
+                    cancelRefresh()
                 },
             )
         }
@@ -209,6 +222,7 @@ class DummyFridgeMainViewModel : IFridgeMainViewModel() {
         get() = MutableLiveData()
 
     override fun refreshFoods() {}
+    override fun cancelRefresh() {}
     override fun onItemClick(position: Int) {}
     override fun onBtnClick() {}
     override fun updateFoodProperty(

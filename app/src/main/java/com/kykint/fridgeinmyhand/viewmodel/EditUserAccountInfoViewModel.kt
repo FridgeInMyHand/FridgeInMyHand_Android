@@ -1,5 +1,6 @@
 package com.kykint.fridgeinmyhand.viewmodel
 
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,6 +12,7 @@ import com.kykint.fridgeinmyhand.repository.UserAccountInfoRepository
 import com.kykint.fridgeinmyhand.utils.Prefs
 import com.naver.maps.geometry.LatLng
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,16 +39,23 @@ abstract class IEditUserAccountInfoViewModel : ViewModel() {
         object Normal : EditingState()
 
         object EditingKakaoTalkLink : EditingState()
+
+        object EditingApiAddress : EditingState()
     }
 
     abstract val editingState: StateFlow<EditingState>
     abstract val userLocation: LiveData<LatLng>
     abstract val kakaoTalkLink: LiveData<String>
+    abstract val serverApiAddress: LiveData<String>
+    abstract val aiApiAddress: LiveData<String>
 
     abstract fun loadInfos()
+    abstract fun cancelLoadInfos()
     abstract fun onEditUserLocationDone(newLoc: LatLng)
     abstract fun editUserKakaoTalkLink()
     abstract fun onEditUserKakaoTalkLinkDone(newLink: String)
+    abstract fun editApiAddress()
+    abstract fun onEditApiAddressDone(newServerApiAddress: String, newAiApiAddress: String)
 }
 
 class EditUserAccountInfoViewModel(
@@ -71,6 +80,15 @@ class EditUserAccountInfoViewModel(
         MutableStateFlow(EditingState.Normal)
     override val editingState: StateFlow<EditingState> = _editingState.asStateFlow()
 
+    private val prefChangeListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+            if (key == Prefs.Key.serverApiAddress) {
+                _serverApiAddress.value = Prefs.serverApiAddress
+            } else if (key == Prefs.Key.aiApiAddress) {
+                _aiApiAddress.value = Prefs.aiApiAddress
+            }
+        }
+
     private val _userLocation: MutableLiveData<LatLng> = MutableLiveData()
     override val userLocation: LiveData<LatLng>
         get() = _userLocation
@@ -79,8 +97,21 @@ class EditUserAccountInfoViewModel(
     override val kakaoTalkLink: LiveData<String>
         get() = _kakaoTalkLink
 
+    private val _serverApiAddress = MutableLiveData(Prefs.serverApiAddress)
+    override val serverApiAddress: LiveData<String> = _serverApiAddress
+
+    private val _aiApiAddress = MutableLiveData(Prefs.aiApiAddress)
+    override val aiApiAddress: LiveData<String> = _aiApiAddress
+
+    private var loadInfosJob: Job? = null
+
+    init {
+        Prefs.registerPrefChangeListener(prefChangeListener)
+    }
+
     override fun loadInfos() {
-        viewModelScope.launch {
+        loadInfosJob?.cancel()
+        loadInfosJob = viewModelScope.launch {
             _uiState.value = UiState.Loading
             repository.fetchUserAccountInfo(Prefs.uuid)?.let { userAccountInfo ->
                 if (userAccountInfo.lat != null && userAccountInfo.long != null) {
@@ -91,11 +122,18 @@ class EditUserAccountInfoViewModel(
                 }
                 userAccountInfo.url?.let { _kakaoTalkLink.value = it }
 
+                loadInfosJob = null
                 _uiState.value = UiState.Normal
             } ?: run {
-                _uiState.value = UiState.Failure
+                cancelLoadInfos()
             }
         }
+    }
+
+    override fun cancelLoadInfos() {
+        loadInfosJob?.cancel()
+        loadInfosJob = null
+        _uiState.value = UiState.Failure
     }
 
     override fun onEditUserLocationDone(newLatLng: LatLng) {
@@ -135,6 +173,21 @@ class EditUserAccountInfoViewModel(
             )
         }
     }
+
+    override fun editApiAddress() {
+        _editingState.value = EditingState.EditingApiAddress
+    }
+
+    override fun onEditApiAddressDone(newServerApiAddress: String, newAiApiAddress: String) {
+        Prefs.serverApiAddress = newServerApiAddress
+        Prefs.aiApiAddress = newAiApiAddress
+        _editingState.value = EditingState.Normal
+    }
+
+    override fun onCleared() {
+        Prefs.unregisterPrefChangeListener(prefChangeListener)
+        super.onCleared()
+    }
 }
 
 /**
@@ -146,9 +199,14 @@ class DummyEditUserAccountInfoViewModel : IEditUserAccountInfoViewModel() {
         MutableStateFlow(EditingState.Normal).asStateFlow()
     override val userLocation: LiveData<LatLng> = MutableLiveData()
     override val kakaoTalkLink: LiveData<String> = MutableLiveData()
+    override val serverApiAddress: LiveData<String> = MutableLiveData()
+    override val aiApiAddress: LiveData<String> = MutableLiveData()
 
     override fun loadInfos() {}
+    override fun cancelLoadInfos() {}
     override fun onEditUserLocationDone(newLoc: LatLng) {}
     override fun editUserKakaoTalkLink() {}
     override fun onEditUserKakaoTalkLinkDone(newLink: String) {}
+    override fun editApiAddress() {}
+    override fun onEditApiAddressDone(newServerApiAddress: String, newAiApiAddress: String) {}
 }

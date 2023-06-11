@@ -23,10 +23,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -187,7 +187,14 @@ fun FoodList(
     onEditFoodClicked: (Int) -> Unit = {},
     onDeleteFoodClicked: (Int) -> Unit = {},
 ) {
-    val thumbnailUrls = MutableList<String?>(models.size) { null }.toMutableStateList()
+    val thumbnailUrls = remember {
+        mutableStateMapOf<String, String?>()
+    }
+
+    LaunchedEffect(models) {
+        thumbnailUrls.clear()
+    }
+
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -201,7 +208,7 @@ fun FoodList(
         ) { index, item ->
             FoodItemCard(
                 food = item,
-                thumbnailUrl = thumbnailUrls[index],
+                thumbnailUrl = thumbnailUrls[item.name],
                 isMyFood = isMyFood,
                 onClick = {
                     onItemClick(index)
@@ -218,7 +225,7 @@ fun FoodList(
                     onDeleteFoodClicked(index)
                 },
                 onFoodThumbnailUrlLoaded = {
-                    thumbnailUrls[index] = it
+                    thumbnailUrls[item.name] = it
                 },
             )
         }
@@ -265,8 +272,8 @@ private fun FoodItemCard(
             mutableStateOf(food.isPublic)
         }.apply { value = food.isPublic }
 
-        if (thumbnail == null) {
-            LaunchedEffect(context) {
+        LaunchedEffect(thumbnail) {
+            if (thumbnail == null) {
                 withContext(Dispatchers.IO) {
                     Food.getNaverImageUrl(food.name)?.let { onFoodThumbnailUrlLoaded(it) }
                 }

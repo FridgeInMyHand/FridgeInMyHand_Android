@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,8 +17,11 @@ import com.kykint.fridgeinmyhand.App
 import com.kykint.fridgeinmyhand.BuildConfig
 import com.kykint.fridgeinmyhand.compose.AddFoodScreen
 import com.kykint.fridgeinmyhand.ui.theme.FridgeInMyHandTheme
+import com.kykint.fridgeinmyhand.utils.createFileFromContentUri
+import com.kykint.fridgeinmyhand.utils.getGalleryAndCameraIntents
 import com.kykint.fridgeinmyhand.viewmodel.AddFoodViewModel
 import java.io.File
+
 
 class AddFoodActivity : ComponentActivity() {
     private val viewModel: AddFoodViewModel by viewModels { AddFoodViewModel.Factory }
@@ -90,11 +92,16 @@ class AddFoodActivity : ComponentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == REQUEST_CAMERA) {
+        if (requestCode == REQUEST_PIC) {
             if (resultCode == RESULT_OK) {
+                data?.data?.let {
+                    // 갤러리 등으로 사진을 선택하였을 경우 Uri를 파일로 복사
+                    createFileFromContentUri(it, tempPicPath)
+                }
                 viewModel.onPictureTaken(tempPicPath)
             }
         }
@@ -110,20 +117,18 @@ class AddFoodActivity : ComponentActivity() {
                 this, FileUriProvider, it
             )
         }
-        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-            putExtra(MediaStore.EXTRA_OUTPUT, tempPicUri)
-        }
+        val chooserIntent = getGalleryAndCameraIntents(tempPicUri)
         try {
-            startActivityForResult(takePictureIntent, REQUEST_CAMERA)
+            startActivityForResult(chooserIntent, REQUEST_PIC)
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "No camera app available!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No camera or gallery app available!", Toast.LENGTH_SHORT).show()
         }
     }
 
     companion object {
         private const val PERM_REQ_CODE = 100
 
-        private const val REQUEST_CAMERA = 10000
+        private const val REQUEST_PIC = 10000
 
         private const val FileUriProvider = BuildConfig.APPLICATION_ID
 

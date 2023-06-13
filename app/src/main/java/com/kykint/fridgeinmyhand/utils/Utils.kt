@@ -91,9 +91,14 @@ fun Context.getGalleryAndCameraIntents(tempPicUri: Uri): Intent {
         }
     }.let { intents.addAll(it) }
 
-    return Intent.createChooser(intents.last(), "Select source").apply {
-        putExtra(Intent.EXTRA_INITIAL_INTENTS, intents.toTypedArray())
-    }
+    return if (intents.isEmpty()) {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+            putExtra(MediaStore.EXTRA_OUTPUT, tempPicUri)
+        }
+    } else
+        Intent.createChooser(intents.last(), "Select source").apply {
+            putExtra(Intent.EXTRA_INITIAL_INTENTS, intents.toTypedArray())
+        }
 }
 
 // https://stackoverflow.com/a/71309183

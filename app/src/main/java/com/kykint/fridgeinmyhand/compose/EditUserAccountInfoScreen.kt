@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Settings
@@ -83,6 +84,12 @@ fun EditUserAccountInfoScreen(
         ) {
             val isUserInfoPresent = (uiState == UiState.Normal || uiState == UiState.Failure)
             Column {
+                SettingsMenuLink(
+                    icon = { Icon(imageVector = Icons.Filled.Info, "Info") },
+                    title = { Text("사용자 UUID") },
+                    subtitle = { Text(Prefs.uuid) },
+                    onClick = {},
+                )
                 SettingsMenuLink(
                     icon = { Icon(imageVector = Icons.Filled.LocationOn, "Location") },
                     title = { Text("사용자 위치") },

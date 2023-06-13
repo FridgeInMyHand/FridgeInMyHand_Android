@@ -21,6 +21,8 @@ class UserAccountInfoRepository : IUserAccountInfoRepository {
 
     /**
      * 사용자 정보 가져오기
+     *
+     * @param onFailure 에러가 발생했거나 유저 정보가 없을 시 콜백
      */
     @WorkerThread
     override suspend fun fetchUserAccountInfo(

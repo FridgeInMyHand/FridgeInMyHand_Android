@@ -332,18 +332,18 @@ private fun FoodItemCard(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
                 /**
                  * 유통기한
                  */
-                Text(
-                    text = food.bestBefore?.let {
-                        "${epochSecondsToSimpleDate(it)} 까지"
-                    } ?: "유통기한 모름",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                food.bestBefore?.let { bestBefore ->
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "${epochSecondsToSimpleDate(bestBefore)} 까지",
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
             /**

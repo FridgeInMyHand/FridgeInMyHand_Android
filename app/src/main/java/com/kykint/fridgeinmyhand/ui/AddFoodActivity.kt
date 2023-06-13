@@ -1,11 +1,11 @@
 package com.kykint.fridgeinmyhand.ui
 
 import android.Manifest
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -120,8 +120,9 @@ class AddFoodActivity : ComponentActivity() {
         val chooserIntent = getGalleryAndCameraIntents(tempPicUri)
         try {
             startActivityForResult(chooserIntent, REQUEST_PIC)
-        } catch (e: ActivityNotFoundException) {
+        } catch (e: Exception) {
             Toast.makeText(this, "No camera or gallery app available!", Toast.LENGTH_SHORT).show()
+            Log.e("launchCamera()", e.toString())
         }
     }
 

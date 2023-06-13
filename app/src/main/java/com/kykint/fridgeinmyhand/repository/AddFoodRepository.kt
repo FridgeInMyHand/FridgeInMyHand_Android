@@ -5,27 +5,28 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
 import com.kykint.fridgeinmyhand.api.AiApi
+import com.kykint.fridgeinmyhand.data.Food
 import java.io.File
 
 interface IAddFoodRepository {
     @WorkerThread
-    suspend fun getFoodNamesFromImage(
+    suspend fun getFoodInfosFromImage(
         bitmap: Bitmap,
-        onSuccess: (List<String>) -> Unit = {},
+        onSuccess: (List<Food>) -> Unit = {},
         onFailure: () -> Unit = {},
     )
 
     @WorkerThread
-    suspend fun getFoodNamesFromImage(
+    suspend fun getFoodInfosFromImage(
         filePath: String,
-        onSuccess: (List<String>) -> Unit = {},
+        onSuccess: (List<Food>) -> Unit = {},
         onFailure: () -> Unit = {},
     )
 
     @WorkerThread
-    suspend fun getFoodNamesFromImage(
+    suspend fun getFoodInfosFromImage(
         file: File,
-        onSuccess: (List<String>) -> Unit = {},
+        onSuccess: (List<Food>) -> Unit = {},
         onFailure: () -> Unit = {},
     )
 }
@@ -36,31 +37,31 @@ interface IAddFoodRepository {
 class AddFoodRepositoryImpl : IAddFoodRepository {
     @RequiresApi(Build.VERSION_CODES.O)
     @WorkerThread
-    override suspend fun getFoodNamesFromImage(
+    override suspend fun getFoodInfosFromImage(
         bitmap: Bitmap,
-        onSuccess: (List<String>) -> Unit,
+        onSuccess: (List<Food>) -> Unit,
         onFailure: () -> Unit,
     ) {
-        AiApi.getFoodLabels(bitmap, onSuccess, onFailure)
+        AiApi.getFoodInfos(bitmap, onSuccess, onFailure)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     @WorkerThread
-    override suspend fun getFoodNamesFromImage(
+    override suspend fun getFoodInfosFromImage(
         filePath: String,
-        onSuccess: (List<String>) -> Unit,
+        onSuccess: (List<Food>) -> Unit,
         onFailure: () -> Unit,
     ) {
-        AiApi.getFoodLabels(filePath, onSuccess, onFailure)
+        AiApi.getFoodInfos(filePath, onSuccess, onFailure)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     @WorkerThread
-    override suspend fun getFoodNamesFromImage(
+    override suspend fun getFoodInfosFromImage(
         file: File,
-        onSuccess: (List<String>) -> Unit,
+        onSuccess: (List<Food>) -> Unit,
         onFailure: () -> Unit,
     ) {
-        AiApi.getFoodLabels(file, onSuccess, onFailure)
+        AiApi.getFoodInfos(file, onSuccess, onFailure)
     }
 }

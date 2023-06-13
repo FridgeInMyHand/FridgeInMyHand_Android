@@ -75,10 +75,10 @@ class AddFoodViewModel(
     override fun onPictureTaken(path: String) {
         viewModelScope.launch {
             _state.value = State.Loading
-            repository.getFoodNamesFromImage(
+            repository.getFoodInfosFromImage(
                 path,
-                onSuccess = { names ->
-                    if (names.isEmpty()) {
+                onSuccess = { foods ->
+                    if (foods.isEmpty()) {
                         Toast.makeText(
                             App.context,
                             "감지된 음식이 없습니다! 보다 가까이서 촬영해보세요.",
@@ -87,10 +87,10 @@ class AddFoodViewModel(
                     } else {
                         Toast.makeText(
                             App.context,
-                            "새 음식을 추가했습니다!\n\"${names.joinToString("\", \"")}\"",
+                            "새 음식을 추가했습니다!\n\"${foods.joinToString("\", \"") { it.name }}\"",
                             Toast.LENGTH_SHORT
                         ).show()
-                        names.map { Food(name = it) }.let { items.addAll(0, it) }
+                        items.addAll(0, foods)
                     }
                     _state.value = State.Success
                 },

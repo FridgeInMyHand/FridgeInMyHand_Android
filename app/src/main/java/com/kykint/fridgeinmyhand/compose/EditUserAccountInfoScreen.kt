@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Settings
@@ -49,7 +50,7 @@ fun EditUserAccountInfoScreen(
     if (uiState is UiState.Loading) {
         ServerWaitingDialog(
             onDismissRequest = {
-                viewModel.cancelLoadInfos()
+                viewModel.onNoUserInfoFound()
             },
             properties = DialogProperties(
                 dismissOnBackPress = true,
@@ -81,28 +82,36 @@ fun EditUserAccountInfoScreen(
         Box(
             modifier = Modifier.padding(contentPadding),
         ) {
+            val isUserInfoPresent = (uiState == UiState.Normal || uiState == UiState.Failure)
             Column {
+                SettingsMenuLink(
+                    icon = { Icon(imageVector = Icons.Filled.Info, "Info") },
+                    title = { Text("사용자 UUID") },
+                    subtitle = { Text(Prefs.uuid) },
+                    onClick = {},
+                )
                 SettingsMenuLink(
                     icon = { Icon(imageVector = Icons.Filled.LocationOn, "Location") },
                     title = { Text("사용자 위치") },
                     subtitle = {
-                        Text(userLocation?.let { "위도: ${it.latitude}\n경도: ${it.longitude}" }
-                            ?: (if (uiState == UiState.Normal) "위치 정보 없음" else "정보를 불러오지 못했습니다."))
+                        if (isUserInfoPresent) {
+                            Text(userLocation?.let { "위도: ${it.latitude}\n경도: ${it.longitude}" }
+                                ?: "위치 정보 없음")
+                        }
                     },
                     onClick = onLocationChooseClicked,
-                    enabled = uiState == UiState.Normal,
                 )
                 SettingsMenuLink(
                     icon = { Icon(imageVector = Icons.Filled.Message, "KakaoTalk Link") },
                     title = { Text("카카오톡 오픈채팅 링크") },
                     subtitle = {
-                        Text(
-                            kakaoTalkLink
-                                ?: (if (uiState == UiState.Normal) "링크 정보 없음" else "정보를 불러오지 못했습니다.")
-                        )
+                        if (isUserInfoPresent) {
+                            Text(
+                                kakaoTalkLink ?: "링크 정보 없음"
+                            )
+                        }
                     },
                     onClick = viewModel::editUserKakaoTalkLink,
-                    enabled = uiState == UiState.Normal,
                 )
                 SettingsMenuLink(
                     icon = { Icon(imageVector = Icons.Filled.Settings, "API Address") },

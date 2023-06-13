@@ -173,6 +173,9 @@ object FridgeApi {
 
     /**
      * 사용자 목록 받아오기
+     *
+     * 유저 조회 성공 시 200
+     * 에러 발생 시, 혹은 유저 정보가 없을 시 500
      */
     @WorkerThread
     suspend fun getUserAccountInfo(

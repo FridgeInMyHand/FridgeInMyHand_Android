@@ -50,7 +50,7 @@ abstract class IEditUserAccountInfoViewModel : ViewModel() {
     abstract val aiApiAddress: LiveData<String>
 
     abstract fun loadInfos()
-    abstract fun cancelLoadInfos()
+    abstract fun onNoUserInfoFound()
     abstract fun onEditUserLocationDone(newLoc: LatLng)
     abstract fun editUserKakaoTalkLink()
     abstract fun onEditUserKakaoTalkLinkDone(newLink: String)
@@ -128,12 +128,12 @@ class EditUserAccountInfoViewModel(
                 loadInfosJob = null
                 _uiState.value = UiState.Normal
             } ?: run {
-                cancelLoadInfos()
+                onNoUserInfoFound()
             }
         }
     }
 
-    override fun cancelLoadInfos() {
+    override fun onNoUserInfoFound() {
         loadInfosJob?.cancel()
         loadInfosJob = null
         _uiState.value = UiState.Failure
@@ -206,7 +206,7 @@ class DummyEditUserAccountInfoViewModel : IEditUserAccountInfoViewModel() {
     override val aiApiAddress: LiveData<String> = MutableLiveData()
 
     override fun loadInfos() {}
-    override fun cancelLoadInfos() {}
+    override fun onNoUserInfoFound() {}
     override fun onEditUserLocationDone(newLoc: LatLng) {}
     override fun editUserKakaoTalkLink() {}
     override fun onEditUserKakaoTalkLinkDone(newLink: String) {}

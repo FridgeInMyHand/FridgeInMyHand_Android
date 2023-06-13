@@ -12,6 +12,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import androidx.annotation.RequiresApi
 import org.threeten.bp.Instant
+import org.threeten.bp.LocalDate
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.ZoneId
 import org.threeten.bp.format.DateTimeFormatter
@@ -125,4 +126,11 @@ fun Context.createFileFromContentUri(fileUri: Uri, filePath: String): File? {
     }
 
     return outputFile
+}
+
+fun getDaysFromTodayInTimestamp(days: Long): Long {
+    val currentDate = LocalDate.now()
+    val futureDate = currentDate.plusDays(days)
+    val instant = futureDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
+    return instant.epochSecond
 }

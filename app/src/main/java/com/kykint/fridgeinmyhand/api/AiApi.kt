@@ -10,7 +10,9 @@ import androidx.annotation.WorkerThread
 import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
 import com.kykint.fridgeinmyhand.App
+import com.kykint.fridgeinmyhand.data.Food
 import com.kykint.fridgeinmyhand.utils.Prefs
+import com.kykint.fridgeinmyhand.utils.getDaysFromTodayInTimestamp
 import com.kykint.fridgeinmyhand.utils.saveAsFile
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -69,8 +71,17 @@ object AiApi {
     private val foodLabels: Map<String, String> = run {
         App.context.assets.open(foodCodesJson).use { `is` ->
             val reader = JsonReader(InputStreamReader(`is`))
-            // val type: Type = object : TypeToken<HashMap<String, Any>>() {}.type
             val map: Map<String, String> =
+                GsonBuilder().create().fromJson(reader, HashMap::class.java)
+            map
+        }
+    }
+
+    private val foodExpirationDatesJson = "FoodExpirationDates.json"
+    private val foodExpirationDates: Map<String, Double> = run {
+        App.context.assets.open(foodExpirationDatesJson).use { `is` ->
+            val reader = JsonReader(InputStreamReader(`is`))
+            val map: Map<String, Double> = // Gson always parses numbers as Double
                 GsonBuilder().create().fromJson(reader, HashMap::class.java)
             map
         }
@@ -81,15 +92,15 @@ object AiApi {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @WorkerThread
-    suspend fun getFoodLabels(
+    suspend fun getFoodInfos(
         bitmap: Bitmap,
-        onSuccess: (List<String>) -> Unit = {},
+        onSuccess: (List<Food>) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
         val tempImage = App.context.filesDir.path + File.separator + "temp.png"
         val file = bitmap.saveAsFile(tempImage)
         file?.let {
-            getFoodLabels(it, onSuccess, onFailure)
+            getFoodInfos(it, onSuccess, onFailure)
         } ?: onFailure()
     }
 
@@ -98,12 +109,12 @@ object AiApi {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @WorkerThread
-    suspend fun getFoodLabels(
+    suspend fun getFoodInfos(
         filePath: String,
-        onSuccess: (List<String>) -> Unit = {},
+        onSuccess: (List<Food>) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
-        return getFoodLabels(File(filePath), onSuccess, onFailure)
+        return getFoodInfos(File(filePath), onSuccess, onFailure)
     }
 
     /**
@@ -111,9 +122,9 @@ object AiApi {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @WorkerThread
-    suspend fun getFoodLabels(
+    suspend fun getFoodInfos(
         file: File,
-        onSuccess: (List<String>) -> Unit = {},
+        onSuccess: (List<Food>) -> Unit = {},
         onFailure: () -> Unit = {},
     ) {
         val fileData = RequestBody.create(
@@ -130,8 +141,13 @@ object AiApi {
                 if (response.isSuccessful && response.body() != null) {
                     onSuccess(response.body()!!.let { body ->
                         Log.e("getFoodLabels()", "SUCCESS:\n$body")
-                        body.asSequence().map { foodLabels[it.data] }
-                            .filterNotNull().toList()
+                        body.asSequence().filter {
+                            it.data.let { code ->
+                                foodLabels.contains(code)
+                            }
+                        }.map {
+                            createFoodFromCode(it.data)
+                        }.filterNotNull().toList()
                     })
                 } else {
                     Toast.makeText(
@@ -151,5 +167,16 @@ object AiApi {
                 onFailure()
             }
         })
+    }
+
+    private fun createFoodFromCode(code: String): Food {
+        val name = foodLabels[code]!!
+        val bestBefore = foodExpirationDates[code]?.let { date ->
+            getDaysFromTodayInTimestamp(date.toLong())
+        }
+        return Food(
+            name = name,
+            bestBefore = bestBefore,
+        )
     }
 }
